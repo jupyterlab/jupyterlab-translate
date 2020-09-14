@@ -1,3 +1,8 @@
 include *.txt
+include *.md
+include *.yaml
+include .bumpversion.cfg
 recursive-include jupyterlab_translate *.cfg
 recursive-include jupyterlab_translate *.json
+recursive-include requirements *.txt
+recursive-include tests *.py
