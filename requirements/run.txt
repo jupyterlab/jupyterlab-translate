@@ -1,0 +1,4 @@
+babel
+click
+cookiecutter
+polib

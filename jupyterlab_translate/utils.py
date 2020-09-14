@@ -1,9 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 """
 """
-
 import importlib
 import json
 import os
@@ -17,15 +15,13 @@ import babel
 import polib
 from cookiecutter.main import cookiecutter
 
-from .constants import (
-    COOKIECUTTER_URL,
-    EXTENSIONS_FOLDER,
-    JUPYTERLAB,
-    LANG_PACKS_FOLDER,
-    LC_MESSAGES,
-    LOCALE_FOLDER,
-    TRANSLATIONS_FOLDER,
-)
+from .constants import COOKIECUTTER_URL
+from .constants import EXTENSIONS_FOLDER
+from .constants import JUPYTERLAB
+from .constants import LANG_PACKS_FOLDER
+from .constants import LC_MESSAGES
+from .constants import LOCALE_FOLDER
+from .constants import TRANSLATIONS_FOLDER
 
 # Constants
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -48,12 +44,26 @@ def get_version(repo_root_path, project):
     str
         Version string for project.
     """
-
+    version_path = os.path.join(repo_root_path, project, "_version.py")
     init_path = os.path.join(repo_root_path, project, "__init__.py")
     pkg_path = os.path.join(repo_root_path, project, "package.json")
 
     version = ""
-    if os.path.isfile(init_path):
+    # TODO: This is probably not robust enough, due to versioneer and friends
+    if os.path.isfile(version_path) and not version:
+        # Try `project/_version.py`
+        sys.path.append(repo_root_path)
+        try:
+            spec = importlib.util.spec_from_file_location(project, version_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            version = module.__version__
+        except Exception:
+            pass
+
+        sys.path.pop()
+
+    if os.path.isfile(init_path) and not version:
         # Try `project/__init__.py`
         sys.path.append(repo_root_path)
         try:
@@ -65,7 +75,8 @@ def get_version(repo_root_path, project):
             pass
 
         sys.path.pop()
-    elif os.path.isfile(pkg_path):
+
+    if os.path.isfile(pkg_path) and not version:
         # Try `package.json`
         with open(pkg_path, "r") as fh:
             data = json.load(fh)
@@ -92,7 +103,7 @@ def create_new_language_pack(output_dir, locale, cookiecutter_url=COOKIECUTTER_U
     loc = babel.Locale.parse(locale)
     options = {"locale": locale.replace("_", "-"), "language": loc.english_name}
     cookiecutter(
-        COOKIECUTTER_URL, extra_context=options, no_input=True, output_dir=output_dir,
+        COOKIECUTTER_URL, extra_context=options, no_input=True, output_dir=output_dir
     )
 
 
@@ -223,7 +234,10 @@ def extract_tsx_strings(input_path):
                 {"expression": "trans.gettext", "arguments": {"text": 0}},
                 {"expression": "this._trans.gettext", "arguments": {"text": 0}},
                 {"expression": "trans._n", "arguments": {"text": 0, "textPlural": 1}},
-                {"expression": "this._trans._n", "arguments": {"text": 0, "textPlural": 1}},
+                {
+                    "expression": "this._trans._n",
+                    "arguments": {"text": 0, "textPlural": 1},
+                },
                 {
                     "expression": "trans.ngettext",
                     "arguments": {"text": 0, "textPlural": 1},
@@ -233,9 +247,18 @@ def extract_tsx_strings(input_path):
                     "arguments": {"text": 0, "textPlural": 1},
                 },
                 {"expression": "trans._p", "arguments": {"context": 0, "text": 1}},
-                {"expression": "this._trans._p", "arguments": {"context": 0, "text": 1}},
-                {"expression": "trans.pgettext", "arguments": {"context": 0, "text": 1}},
-                {"expression": "this._trans.pgettext", "arguments": {"context": 0, "text": 1}},
+                {
+                    "expression": "this._trans._p",
+                    "arguments": {"context": 0, "text": 1},
+                },
+                {
+                    "expression": "trans.pgettext",
+                    "arguments": {"context": 0, "text": 1},
+                },
+                {
+                    "expression": "this._trans.pgettext",
+                    "arguments": {"context": 0, "text": 1},
+                },
                 {
                     "expression": "trans._np",
                     "arguments": {"context": 0, "text": 1, "textPlural": 2},
@@ -252,30 +275,21 @@ def extract_tsx_strings(input_path):
                     "expression": "this._trans.npgettext",
                     "arguments": {"context": 0, "text": 1, "textPlural": 2},
                 },
-
             ],
             "glob": {
                 "pattern": "packages/**/*.ts*(x)",
                 "options": {"ignore": "packages/**/*.spec.ts"},
             },
-            "comments": {
-                "otherLineLeading": True,
-            }
+            "comments": {"otherLineLeading": True},
         },
         "headers": {"Language": ""},
         "output": output_path,
     }
-    print(output_path)
     __, config_path = tempfile.mkstemp(suffix=".json")
     with open(config_path, "w") as fh:
         fh.write(json.dumps(config))
 
-    cmd = [
-        "gettext-extract",
-        "--config",
-        config_path,
-    ]
-    # print(input_path)
+    cmd = ["gettext-extract", "--config", config_path]
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=input_path
     )
@@ -285,27 +299,18 @@ def extract_tsx_strings(input_path):
     with open(output_path, "r") as fh:
         lines = ["#, fuzzy"] + fh.read().split("\n")
 
-    # print(lines)
-
     with open(output_path, "w") as fh:
         fh.write("\n".join(lines))
 
     entries = []
     pot = polib.pofile(output_path, wrapwidth=100000)
     for entry in pot:
-        # print(entry.msgid, entry.msgstr)
         occurrences = []
-        # print([entry.msgid_plural, entry.msgstr_plural])
         for (string_fpath, line) in entry.occurrences:
             # Convert absolute paths to relative paths
             occurrences.append((string_fpath, line))
-            # print(string_fpath, line)
-        # print("\n")
 
-        data = {
-            "msgid": entry.msgid,
-            "occurrences": occurrences,
-        }
+        data = {"msgid": entry.msgid, "occurrences": occurrences}
 
         if entry.msgid_plural:
             data["msgid_plural"] = entry.msgid_plural
@@ -325,7 +330,6 @@ def extract_tsx_strings(input_path):
 
         entries.append(data)
 
-    # print(entries)
     try:
         os.remove(config_path)
     except Exception:
@@ -419,18 +423,14 @@ def extract_schema_strings(input_path):
                             occurrences=[(ref_path, get_line(schema_lines, title))],
                         )
                     )
-
+                description = values.get("description", "")
                 entries.append(
                     dict(
                         msgctxt=message_context,
-                        msgid=values["description"].replace("\n", "</br/>"),
-                        occurrences=[
-                            (ref_path, get_line(schema_lines, values["description"]))
-                        ],
+                        msgid=description.replace("\n", "</br/>"),
+                        occurrences=[(ref_path, get_line(schema_lines, description))],
                     )
                 )
-    # for entry in entries:
-    #     print(entry)
 
     return entries
 
@@ -513,9 +513,10 @@ def fix_location(path, pot_path, append_entries=None):
             pot.append(entry)
 
     pot.save(pot_path)
+    return pot.metadata.copy()
 
 
-def remove_duplicates(pot_path):
+def remove_duplicates(pot_path, metadata):
     """
     FIXME:
     """
@@ -532,7 +533,6 @@ def remove_duplicates(pot_path):
 
         # Create a unique key using context, singular and plurals
         key = (entry.msgctxt, entry.msgid, entry.msgid_plural)
-        # print(key)
         if key in entries:
             entries[key].append(entry)
             duplicates.add(key)
@@ -542,9 +542,8 @@ def remove_duplicates(pot_path):
             entries_data[key] = entry
 
     # Merge info from duplicate
-    print("DUPLICATES!")
+    print("Merging duplicates...")
     for key in duplicates:
-        print(key)
         items = entries[key]
         entry = entries_data[key]
         new_occurences = []
@@ -561,7 +560,17 @@ def remove_duplicates(pot_path):
         entries[key] = [entry]
 
     po = polib.POFile(wrapwidth=100000)
-    # po.metadata = pot.metadada
+    keys = [
+        "Project-Id-Version",
+        "MIME-Version",
+        "Content-Type",
+        "Content-Transfer-Encoding",
+    ]
+    new_metadata = {}
+    for key in keys:
+        new_metadata[key] = metadata[key]
+
+    po.metadata = new_metadata
     for item in sorted(entries, key=lambda x: entries[x][0].occurrences):
         po.append(entries[item][0])
 
@@ -597,9 +606,15 @@ def create_catalog(repo_root_dir, locale_dir, project, version):
     extract_strings(flat_files, pot_path, project, version=version)
     append_entries_tsx = extract_tsx_strings(repo_root_dir)
     append_entries_schemas = extract_schema_strings(repo_root_dir)
-    print("\nTotal entries: {}\n".format(len(append_entries_schemas) + len(append_entries_tsx)))
-    fix_location(repo_root_dir, pot_path, append_entries_tsx + append_entries_schemas)
-    return pot_path
+    print(
+        "\nTotal entries: {}\n".format(
+            len(append_entries_schemas) + len(append_entries_tsx)
+        )
+    )
+    metadata = fix_location(
+        repo_root_dir, pot_path, append_entries_tsx + append_entries_schemas
+    )
+    return pot_path, metadata
 
 
 def update_catalogs(pot_path, output_dir, locale):
@@ -625,7 +640,7 @@ def update_catalogs(pot_path, output_dir, locale):
 
     # Check if locale exists!
     po_path = "{output_dir}/{locale}/LC_MESSAGES/{domain}.po".format(
-        output_dir=output_dir, locale=locale, domain=domain,
+        output_dir=output_dir, locale=locale, domain=domain
     )
     command = "update" if os.path.isfile(po_path) else "init"
     cmd = [
@@ -669,6 +684,7 @@ def compile_catalog(locale_dir, domain, locale):
         locale_dir, locale, LC_MESSAGES, "{domain}.po".format(domain=domain)
     )
 
+
 def compile_to_mo(po_path):
     po = polib.pofile(po_path)
     mo_path = po_path.replace(".po", ".mo")
@@ -697,8 +713,8 @@ def extract_translations(repo_root_dir, output_dir, project):
     # Extract pot file
     locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
     os.makedirs(locale_dir, exist_ok=True)
-    pot_path = create_catalog(repo_root_dir, locale_dir, project, version)
-    remove_duplicates(pot_path)
+    pot_path, metadata = create_catalog(repo_root_dir, locale_dir, project, version)
+    remove_duplicates(pot_path, metadata)
     return pot_path
 
 
@@ -762,9 +778,3 @@ def compile_translations(output_dir, project, locales=None):
         po_paths[locale] = po_path
 
     return po_paths
-
-
-if __name__ == "__main__":
-    remove_duplicates(
-        "/Users/goanpeca/Dropbox (Personal)/develop/quansight/jupyterlab-language-packs/jupyterlab/locale/jupyterlab.pot"
-    )

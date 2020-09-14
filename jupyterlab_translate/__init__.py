@@ -1,6 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
- 
-from .finder import get_installed_language_packs, get_language_pack
+from .finder import get_installed_language_packs
+from .finder import get_language_pack
 
-__version__ = "0.1.0"
+__version__ = "0.1.0-dev0"

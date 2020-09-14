@@ -1,20 +1,16 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-
 """
 Command line interface.
 """
-
 import click
 
-from .api import (
-    compile_language_pack,
-    compile_package,
-    extract_language_pack,
-    extract_package,
-    update_language_pack,
-    update_package,
-)
+from .api import compile_language_pack
+from .api import compile_package
+from .api import extract_language_pack
+from .api import extract_package
+from .api import update_language_pack
+from .api import update_package
 
 # --- Common arguments
 # ----------------------------------------------------------------------------
@@ -113,6 +109,7 @@ def compile_pack(language_packs_repo_dir, project, locales):
     click.echo("Compiling for Jupyterlab Language Pack")
 
     compile_language_pack(language_packs_repo_dir, project, locales)
+
 
 # Rinse and repeat
 # Not working!!! :-p
