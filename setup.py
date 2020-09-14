@@ -1,16 +1,22 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
     name="jupyterlab-translate",
     version="0.1.0",
     author="Gonzalo Peña-Castellanos",
     author_email="goanpeca@gmail.com",
-    url="https://github.com/goanpeca/jupyterlab-translate",
+    license="BSD-3-Clause",
+    url="https://github.com/jupyterlab/jupyterlab-translate",
     description="Jupyterlab Language Pack Translations Helper",
     install_requires=["click", "cookiecutter", "polib", "babel"],
-    keywords=["localization", "translation", "jupyterlab", "jupyter", "i18n"],
-    packages=["jupyterlab_translate"],
-    package_dir={"jupyterlab_translate": "jupyterlab_translate"},
-    package_data={"": ["*.cfg"]},
-    entry_points={"console_scripts": ["jlab-trans = jupyterlab_translate.cli:main"]},
+    keywords=["localization", "translation", "jupyterlab", "jupyter", "i18n", "i10n"],
+    packages=find_packages(),
+    include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "jlab-trans = jupyterlab_translate.cli:main",
+            "jlab-translate = jupyterlab_translate.cli:main",
+            "jupyterlab-translate = jupyterlab_translate.cli:main",
+        ],
+    },
 )
