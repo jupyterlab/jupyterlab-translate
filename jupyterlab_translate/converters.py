@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 
+import ast
 import json
 import os
 
@@ -36,11 +37,13 @@ def convert_catalog_to_json(po_path, output_dir, project):
         "": {
             "domain": project,
             "version": po.metadata["Project-Id-Version"].split(" ")[-1],
-            "language": po.metadata["Language"],
+            "language": po.metadata["Language"].replace("_", "-"),
             "plural_forms": po.metadata["Plural-Forms"],
         }
     }
 
+    nplurals_string = po.metadata["Plural-Forms"].split(";")[0]
+    nplurals = ast.literal_eval(nplurals_string.replace("nplurals=", ""))
     # Load existing file in case some old strings need to remain
     if os.path.isfile(json_path):
         with open(json_path, "r") as fh:
@@ -63,11 +66,16 @@ def convert_catalog_to_json(po_path, output_dir, project):
             result[key] = [entry.msgstr]
         elif entry.msgstr_plural:
             plural = [entry.msgid_plural]
+
             result[key] = plural
             ordered_plural = sorted(entry.msgstr_plural.items())
 
             for __, msgstr in ordered_plural:
                 plural.append(msgstr)
+
+            # If language has nplurals=1, then add the same translation
+            if nplurals == 1:
+                plural[0] = plural[-1]
 
     with open(json_path, "w") as fh:
         fh.write(json.dumps(result, sort_keys=True, indent=4 * " "))

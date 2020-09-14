@@ -12,6 +12,7 @@ from .constants import JUPYTERLAB
 from .converters import convert_catalog_to_json
 from .utils import (
     check_locale,
+    compile_to_mo,
     compile_translations,
     create_new_language_pack,
     update_translations,
@@ -127,6 +128,7 @@ def compile_language_pack(language_packs_repo_dir, project, locales):
     """
     FIXME:
     """
+    # print("LOCALES", locales)
     if locales:
         check_locales(locales)
 
@@ -143,11 +145,11 @@ def compile_language_pack(language_packs_repo_dir, project, locales):
     for locale, po_path in po_paths.items():
         output_path = os.path.dirname(po_path)
         json_path = convert_catalog_to_json(po_path, output_path, project)
-        mo_path = po_path.replace(".po", ".mo")
+        mo_path = compile_to_mo(po_path)
 
         # Move to language pack folder
         language_packs_dir = os.path.join(language_packs_repo_dir, "language-packs")
-        pkg_name = "jupyterlab-language-pack-{locale}".format(locale=locale)
+        pkg_name = "jupyterlab-language-pack-{locale}".format(locale=locale).replace("_", "-")
         locale_language_pack_dir = os.path.join(
             language_packs_dir, pkg_name, pkg_name.replace("-", "_")
         )
@@ -160,6 +162,9 @@ def compile_language_pack(language_packs_repo_dir, project, locales):
             output_dir = os.path.join(locale_language_pack_dir)
         else:
             output_dir = os.path.join(locale_language_pack_dir, "extensions")
+
+        shutil.rmtree(os.path.join(output_dir, os.path.basename(mo_path)), ignore_errors=True)
+        shutil.rmtree(os.path.join(output_dir, os.path.basename(json_path)), ignore_errors=True)
 
         shutil.move(mo_path, os.path.join(output_dir, os.path.basename(mo_path)))
         shutil.move(json_path, os.path.join(output_dir, os.path.basename(json_path)))

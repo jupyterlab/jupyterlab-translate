@@ -89,8 +89,8 @@ def create_new_language_pack(output_dir, locale, cookiecutter_url=COOKIECUTTER_U
     if not check_locale(locale):
         raise Exception("Invalid locale!")
 
-    loc = babel.Locale(locale)
-    options = {"locale": locale, "language": loc.english_name}
+    loc = babel.Locale.parse(locale)
+    options = {"locale": locale.replace("_", "-"), "language": loc.english_name}
     cookiecutter(
         COOKIECUTTER_URL, extra_context=options, no_input=True, output_dir=output_dir,
     )
@@ -100,8 +100,7 @@ def check_locale(locale):
     """Check if a locale is a valid value."""
     value = False
     try:
-        print(locale)
-        babel.Locale(*locale.split("_"))
+        val = babel.Locale.parse(locale)
         value = True
     except Exception as e:
         print(str(e))
@@ -430,6 +429,8 @@ def extract_schema_strings(input_path):
                         ],
                     )
                 )
+    # for entry in entries:
+    #     print(entry)
 
     return entries
 
@@ -522,27 +523,42 @@ def remove_duplicates(pot_path):
     os.rename(pot_path, old_pot_name)
     pot = polib.pofile(old_pot_name, wrapwidth=100000, check_for_duplicates=False)
     entries = {}
+    entries_data = {}
     duplicates = set()
     for entry in pot:
-        if entry.msgid in entries:
-            entries[entry.msgid].append(entry)
-            duplicates.add(entry.msgid)
+        # Remove empty msgid
+        if not bool(entry.msgid):
+            continue
+
+        # Create a unique key using context, singular and plurals
+        key = (entry.msgctxt, entry.msgid, entry.msgid_plural)
+        # print(key)
+        if key in entries:
+            entries[key].append(entry)
+            duplicates.add(key)
         else:
             entry.occurrences = list(sorted(entry.occurrences))
-            entries[entry.msgid] = [entry]
+            entries[key] = [entry]
+            entries_data[key] = entry
 
-    # Merge info from duplicate, only supports singular (for now)
-    for dup in duplicates:
-        items = entries[dup]
+    # Merge info from duplicate
+    print("DUPLICATES!")
+    for key in duplicates:
+        print(key)
+        items = entries[key]
+        entry = entries_data[key]
         new_occurences = []
         for item in items:
             new_occurences.extend(item.occurrences)
 
         entry = polib.POEntry(
-            msgid=items[0].msgid, occurrences=list(sorted(new_occurences))
+            msgid=entry.msgid,
+            msgid_plural=entry.msgid_plural,
+            msgctxt=entry.msgctxt,
+            occurrences=list(sorted(new_occurences)),
         )
 
-        entries[dup] = [entry]
+        entries[key] = [entry]
 
     po = polib.POFile(wrapwidth=100000)
     # po.metadata = pot.metadada
@@ -652,6 +668,12 @@ def compile_catalog(locale_dir, domain, locale):
     return os.path.join(
         locale_dir, locale, LC_MESSAGES, "{domain}.po".format(domain=domain)
     )
+
+def compile_to_mo(po_path):
+    po = polib.pofile(po_path)
+    mo_path = po_path.replace(".po", ".mo")
+    po.save_as_mofile(mo_path)
+    return mo_path
 
 
 # --- Global methods
