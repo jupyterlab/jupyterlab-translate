@@ -47,7 +47,7 @@ Visit the [language packs repository](https://github.com/jupyterlab/language-pac
 ### Bundle catalogs with packages
 
 ```bash
-jlab-trans extract <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME
-jlab-trans update <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME -l es-ES
-jlab-trans compile <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME
+jlab-trans extract <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
+jlab-trans update <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME> -l es-ES
+jlab-trans compile <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
 ```

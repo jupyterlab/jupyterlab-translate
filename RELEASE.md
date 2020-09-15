@@ -4,7 +4,7 @@
 
 ```bash
 pre-commit run -a
-check-manifest
+check-manifest -v
 ```
 
 * Bump versions
