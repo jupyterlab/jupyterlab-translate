@@ -1,6 +1,9 @@
 # jupyterlab-translate
 
 ![Linux tests](https://github.com/jupyterlab/jupyterlab-translate/workflows/Run%20tests/badge.svg)
+[![license](https://img.shields.io/pypi/l/jupyterlab-translate.svg)](./LICENSE.txt)
+[![pypi version](https://img.shields.io/pypi/v/jupyterlab-translate.svg)](https://pypi.org/project/jupyterlab-translate/)
+[![conda version](https://img.shields.io/conda/vn/conda-forge/jupyterlab-translate.svg)](https://www.anaconda.org/conda-forge/jupyterlab-translate)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Join the chat at https://gitter.im/jupyterlab/jupyterlab](https://badges.gitter.im/jupyterlab/jupyterlab.svg)](https://gitter.im/jupyterlab/jupyterlab)
 
@@ -27,7 +30,7 @@ You will also need to install [gettext-extract](https://www.npmjs.com/package/ge
 to be able to extract strings from `*.tsx` files.
 
 ```bash
-npm install gettext-extract -g
+npm install gettext-extract
 ```
 
 ### Conda
@@ -47,7 +50,7 @@ Visit the [language packs repository](https://github.com/jupyterlab/language-pac
 ### Bundle catalogs with packages
 
 ```bash
-jlab-trans extract <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
-jlab-trans update <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME> -l es-ES
-jlab-trans compile <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
+jupyterlab-translate extract <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
+jupyterlab-translate update <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME> -l es-ES
+jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
 ```

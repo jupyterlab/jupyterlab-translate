@@ -289,7 +289,7 @@ def extract_tsx_strings(input_path):
     with open(config_path, "w") as fh:
         fh.write(json.dumps(config))
 
-    cmd = ["gettext-extract", "--config", config_path]
+    cmd = ["npx", "gettext-extract", "--config", config_path]
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=input_path
     )
