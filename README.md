@@ -2,11 +2,18 @@
 
 ![Linux tests](https://github.com/jupyterlab/jupyterlab-translate/workflows/Run%20tests/badge.svg)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Join the chat at https://gitter.im/jupyterlab/jupyterlab](https://badges.gitter.im/jupyterlab/jupyterlab.svg)](https://gitter.im/jupyterlab/jupyterlab?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-Jupyterlab Language Pack Translations Helper.
+[![Join the chat at https://gitter.im/jupyterlab/jupyterlab](https://badges.gitter.im/jupyterlab/jupyterlab.svg)](https://gitter.im/jupyterlab/jupyterlab)
 
 This package is used to generate [language packs](https://github.com/jupyterlab/language-packs) for the JupyterLab ecosystem.
+
+This pacakge performs the following tasks common on JupyterLab core and external extensions:
+
+* Extract strings from code in `*.py`, `*.ts`, `*.tsx` files.
+* Extract strings from JSON schema files.
+* Create gettext `*.pot` catalogs.
+* Removes duplicate strings from catalogs.
+* Create gettext `*.po` catalogs for specific languages.
+* Compile catalogs to `*.mo` and `*.json` format to be consumed by the JupyterLab frontent.
 
 ## Installation
 
@@ -16,7 +23,8 @@ This package is used to generate [language packs](https://github.com/jupyterlab/
 pip install jupyterlab-translate
 ```
 
-You will also need to install an npm package to be able to extract strings from `*.tsx` files.
+You will also need to install [gettext-extract](https://www.npmjs.com/package/gettext-extract)
+to be able to extract strings from `*.tsx` files.
 
 ```bash
 npm install gettext-extract -g
@@ -30,33 +38,16 @@ conda install jupyterlab-translate -c conda-forge
 
 ## Usage
 
-```bash
-jlab-trans extract-pack ~/develop/quansight/jupyterlab ~/develop/quansight/language-packs jupyterlab
-jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-```
+### Bundle catalogs as part of a language pack
 
-### Jupyterlab example language packs
+This is the recommended way of distributing your localization catalogs.
 
-```bash
-jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-jlab-trans compile-pack ~/develop/quansight/language-packs jupyterlab -l zh_CN
-jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l pt_BR
-jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l fr
-jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l fr
-jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l pt_BR
-```
+Visit the [language packs repository](https://github.com/jupyterlab/language-packs).
 
-### Extension example language packs
+### Bundle catalogs with packages
 
 ```bash
-jlab-trans update-pack ~/develop/quansight/jupyterlab-git ~/develop/quansight/jupyterlab-language-packs jupyterlab_git -l es
-jlab-trans compile-pack ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
-```
-
-### Extension example stand alone package
-
-```bash
-jlab-trans update ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
-jlab-trans compile ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
+jlab-trans extract <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME
+jlab-trans update <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME -l es-ES
+jlab-trans compile <JLAB-EXTENSION-DIR> <JUPYTERLAB_EXTENSION_NAME
 ```
