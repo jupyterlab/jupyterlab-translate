@@ -109,26 +109,3 @@ def compile_pack(language_packs_repo_dir, project, locales):
     click.echo("Compiling for Jupyterlab Language Pack")
 
     compile_language_pack(language_packs_repo_dir, project, locales)
-
-
-# Rinse and repeat
-# Not working!!! :-p
-# jlab-trans extract-pack ~/develop/quansight/jupyterlab ~/develop/quansight/language-packs jupyterlab
-# jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-# jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-
-# Jupyterlab example language packs
-# jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l es
-# jlab-trans compile-pack ~/develop/quansight/language-packs jupyterlab -l zh_CN
-# jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l pt_BR
-# jlab-trans update-pack ~/develop/quansight/jupyterlab ~/develop/quansight/jupyterlab-language-packs jupyterlab -l fr
-# jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l fr
-# jlab-trans compile-pack ~/develop/quansight/jupyterlab-language-packs jupyterlab -l pt_BR
-
-# Extension example language packs
-# jlab-trans update-pack ~/develop/quansight/jupyterlab-git ~/develop/quansight/jupyterlab-language-packs jupyterlab_git -l es
-# jlab-trans compile-pack ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
-
-# Extension example stand alone package
-# jlab-trans update ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
-# jlab-trans compile ~/develop/quansight/jupyterlab-git jupyterlab_git -l es
