@@ -289,11 +289,13 @@ def extract_tsx_strings(input_path):
     with open(config_path, "w") as fh:
         fh.write(json.dumps(config))
 
-    cmd = ["npx", "gettext-extract", "--config", config_path]
+    cmd = ["gettext-extract", "--config", config_path]
     p = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=input_path
     )
-    p.communicate()
+    stderr, stdout = p.communicate()
+    if p.returncode != 0:
+        raise Exception("`gettext-extract` error!")
 
     # Fix the missing format
     with open(output_path, "r") as fh:

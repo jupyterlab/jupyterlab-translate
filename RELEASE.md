@@ -1,5 +1,18 @@
 # Release
 
+## Update gettext.js
+
+```bash
+rm package-lock.json
+rm -rf node_modules/
+npm install gettext-extract
+npm install @vercel/ncc -g
+ncc build node_modules/gettext-extract/bin/gettext-extract -o jupyterlab_translate --minify
+rm -rf jupyterlab_translate/typescript
+```
+
+## Make release
+
 * Check code before releasing the package.
 
 ```bash

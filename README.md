@@ -26,12 +26,7 @@ This pacakge performs the following tasks common on JupyterLab core and external
 pip install jupyterlab-translate
 ```
 
-You will also need to install [gettext-extract](https://www.npmjs.com/package/gettext-extract)
-to be able to extract strings from `*.tsx` files.
-
-```bash
-npm install gettext-extract
-```
+You will also need to install `nodejs` >= 14.
 
 ### Conda
 
@@ -50,7 +45,7 @@ Visit the [language packs repository](https://github.com/jupyterlab/language-pac
 ### Bundle catalogs with packages
 
 ```bash
-jupyterlab-translate extract <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
-jupyterlab-translate update <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME> -l es-ES
-jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB_EXTENSION_NAME>
+jupyterlab-translate extract <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
+jupyterlab-translate update <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME> -l es-ES
+jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
 ```

@@ -48,6 +48,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     entry_points={
-        "console_scripts": ["jupyterlab-translate = jupyterlab_translate.cli:main"]
+        "console_scripts": [
+            "jupyterlab-translate = jupyterlab_translate.cli:main",
+            "gettext-extract = jupyterlab_translate.gettext_extract:main",
+        ]
     },
 )
