@@ -28,10 +28,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag: ${{ env.CURRENT_TAG }}
-        name: Release ${{ env.CURRENT_TAG }}
+        tag: ${{ github.event.release.tag_name }}
+        name: Release ${{ github.event.release.tag_name }}
         artifacts: ${{ env.CURRENT_LOCALE_DIR }}/dist/*
-        body: Release ${{ env.CURRENT_TAG }}
+        body: Release ${{ github.event.release.tag_name }}
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish PyPI Package
       env:
