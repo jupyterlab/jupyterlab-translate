@@ -8,7 +8,9 @@ import shutil
 
 from .constants import EXTENSIONS_FOLDER
 from .constants import JUPYTERLAB
-from .constants import LANG_PACKS_FOLDER, LC_MESSAGES, LOCALE_FOLDER
+from .constants import LANG_PACKS_FOLDER
+from .constants import LC_MESSAGES
+from .constants import LOCALE_FOLDER
 from .converters import convert_catalog_to_json
 from .utils import check_locale
 from .utils import compile_to_mo
