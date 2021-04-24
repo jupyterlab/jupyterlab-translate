@@ -8,7 +8,7 @@ import shutil
 
 from .constants import EXTENSIONS_FOLDER
 from .constants import JUPYTERLAB
-from .constants import LANG_PACKS_FOLDER
+from .constants import LANG_PACKS_FOLDER, LC_MESSAGES, LOCALE_FOLDER
 from .converters import convert_catalog_to_json
 from .utils import check_locale
 from .utils import compile_to_mo
@@ -124,7 +124,6 @@ def compile_language_pack(language_packs_repo_dir, project, locales):
     """
     FIXME:
     """
-    # print("LOCALES", locales)
     if locales:
         check_locales(locales)
 

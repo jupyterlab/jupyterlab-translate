@@ -222,6 +222,11 @@ def extract_tsx_strings(input_path):
     str
         FIXME:
     """
+    if input_path.split(os.sep)[-1] == "jupyterlab":
+        pattern_path = "packages"
+    else:
+        pattern_path = "src"
+
     __, output_path = tempfile.mkstemp(suffix=".pot")
     if "~" in input_path:
         input_path = os.path.expanduser(input_path)
@@ -277,8 +282,8 @@ def extract_tsx_strings(input_path):
                 },
             ],
             "glob": {
-                "pattern": "packages/**/*.ts*(x)",
-                "options": {"ignore": "packages/**/*.spec.ts"},
+                "pattern": f"{pattern_path}/**/*.ts*(x)",
+                "options": {"ignore": f"{pattern_path}/**/*.spec.ts"},
             },
             "comments": {"otherLineLeading": True},
         },
