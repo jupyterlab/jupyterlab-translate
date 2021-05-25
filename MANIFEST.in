@@ -3,10 +3,7 @@ include *.md
 include *.yaml
 include .bumpversion.cfg
 include jupyterlab_translate/index.js
-recursive-include jupyterlab_translate *.cfg
-recursive-include jupyterlab_translate *.json
-recursive-include jupyterlab_translate *.py
+recursive-include jupyterlab_translate *.cfg *.json *.py
 recursive-include requirements *.txt
-recursive-include tests *.py
-recursive-exclude jupyterlab_translate/typescript/lib *.json
-recursive-exclude jupyterlab_translate/typescript/lib *.js
+recursive-include tests *.py *.json
+recursive-exclude jupyterlab_translate/typescript/lib *.json *.js
