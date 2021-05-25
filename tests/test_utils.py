@@ -84,5 +84,7 @@ def test_extract_schema_strings_jinja2_error(tmp_path):
     schema_file.write_text(json.dumps(schema, indent=2))
 
     # When
-    with pytest.raises(ValueError, match=r'Got "\(\'Hello, %\(user\)s!\', None\)" line 21'):
+    with pytest.raises(
+        ValueError, match=r'Got "\(\'Hello, %\(user\)s!\', None\)" line 21'
+    ):
         extract_schema_strings(str(extension_path))
