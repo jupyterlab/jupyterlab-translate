@@ -11,13 +11,13 @@ import subprocess
 import sys
 import tempfile
 from collections import OrderedDict
-from typing import Dict, List
-
+from typing import Dict
+from typing import List
 
 import babel
+import jinja2
 import polib
 from cookiecutter.main import cookiecutter
-import jinja2
 
 from .constants import COOKIECUTTER_URL
 from .constants import EXTENSIONS_FOLDER
