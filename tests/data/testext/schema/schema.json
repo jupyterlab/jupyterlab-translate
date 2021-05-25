@@ -1,0 +1,42 @@
+{
+  "jupyter.lab.setting-icon": "ui-components:text-editor",
+  "jupyter.lab.setting-icon-label": "{{ _('CodeMirror') }}",
+  "jupyter.lab.menus": {
+    "main": [
+      {
+        "id": "jp-mainmenu-view",
+        "items": [
+          {
+            "type": "submenu",
+            "submenu": {
+              "id": "jp-mainmenu-view-codemirror-theme",
+              "label": "{{ _('Text Editor Syntax Highlighting') }}"
+            },
+            "rank": 40
+          }
+        ]
+      }
+    ]
+  },
+  "title": "CodeMirror",
+  "description": "Text editor settings for all CodeMirror editors.",
+  "properties": {
+    "keyMap": {
+      "type": "string",
+      "title": "{{ _('Key Map') }}",
+      "description": "{{ gettext('Configures the keymap to use') }}",
+      "default": "default"
+    },
+    "theme": {
+      "type": "string",
+      "title": "Theme",
+      "description": "CSS file defining the corresponding\n.cm-s-[name] styles is loaded",
+      "default": "jupyter"
+    },
+    "dummyPlural": {
+      "type": "string",
+      "default": "{{ gettext('Translated string') }}"
+    }
+  },
+  "type": "object"
+}

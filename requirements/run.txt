@@ -1,4 +1,5 @@
 babel
 click
 cookiecutter
+jinja2
 polib

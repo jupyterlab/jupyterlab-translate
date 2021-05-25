@@ -1,22 +1,20 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import ast
-import os
+from pathlib import Path
 
 from setuptools import find_packages
 from setuptools import setup
 
 # Constants
-HERE = os.path.abspath(os.path.dirname(__file__))
+HERE = Path(__file__).parent.resolve()
 
 
 def get_version(module="jupyterlab_translate"):
     """Get version."""
-    with open(os.path.join(HERE, module, "__init__.py"), "r") as f:
-        data = f.read()
+    data = (HERE / module / "__init__.py").read_text()
 
-    lines = data.split("\n")
-    for line in lines:
+    for line in data.splitlines():
         if line.startswith("__version__"):
             version = ast.literal_eval(line.split("=")[-1].strip())
             break
@@ -26,11 +24,18 @@ def get_version(module="jupyterlab_translate"):
 
 def get_description():
     """Get long description."""
-    with open(os.path.join(HERE, "README.md"), "r") as f:
-        data = f.read()
+    return (HERE / "README.md").read_text()
 
-    return data
 
+run_requirements = [
+    p for p in (HERE / "requirements" / "run.txt").read_text().splitlines() if p
+]
+test_requirements = [
+    p for p in (HERE / "requirements" / "run.txt").read_text().splitlines() if p
+]
+release_requirements = [
+    p for p in (HERE / "requirements" / "run.txt").read_text().splitlines() if p
+]
 
 setup(
     name="jupyterlab-translate",
@@ -43,7 +48,7 @@ setup(
     license="BSD-3-Clause",
     platforms="Linux, Mac OS X, Windows",
     url="https://github.com/jupyterlab/jupyterlab-translate",
-    install_requires=["babel", "click", "cookiecutter", "polib"],
+    install_requires=run_requirements,
     keywords=["localization", "translation", "jupyterlab", "jupyter", "i18n", "i10n"],
     packages=find_packages(),
     include_package_data=True,
@@ -53,4 +58,5 @@ setup(
             "gettext-extract = jupyterlab_translate.gettext_extract:main",
         ]
     },
+    extras_requires={"test": test_requirements, "release": release_requirements},
 )

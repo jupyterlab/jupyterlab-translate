@@ -136,3 +136,4 @@ node_modules/
 package-lock.json
 
 jupyterlab_translate/typescript
+.vscode/

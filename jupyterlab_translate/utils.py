@@ -5,15 +5,19 @@
 import importlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 from collections import OrderedDict
+from typing import Dict, List
+
 
 import babel
 import polib
 from cookiecutter.main import cookiecutter
+import jinja2
 
 from .constants import COOKIECUTTER_URL
 from .constants import EXTENSIONS_FOLDER
@@ -25,6 +29,7 @@ from .constants import TRANSLATIONS_FOLDER
 
 # Constants
 HERE = os.path.abspath(os.path.dirname(__file__))
+JINJA2_I18N = re.compile(r"^\s*{{\s*(_|gettext)\('.*'\)\s*}}\s*$")
 
 # --- Helpers
 # ----------------------------------------------------------------------------
@@ -363,23 +368,27 @@ def get_line(lines, value):
     return str(line_count)
 
 
-def extract_schema_strings(input_path):
+def extract_schema_strings(input_path: str) -> List[Dict]:
     """
-    Use gettext-extract to extract strings from TSX files.
+    Extract strings from JSON settings files.
+
+    String extracted are 'title' and 'description' entries of the schema
+    and translated strings using jinja2 i18n extension (e.g. "{{ _('Hello') }}").
 
     Parameters
     ----------
-    temp_output_path: str
-        FIXME:
+    input_path: str
+        NPM package path
 
     Returns
     -------
-    str
-        FIXME:
+    List[Dict]
+        List of string to translate
     """
     input_paths = find_source_files(input_path, extensions=("package.json",))
     schema_paths = []
     message_context = "schema"
+    env = jinja2.Environment(extensions=["jinja2.ext.i18n"])
 
     for path in input_paths:
         if os.path.isfile(path):
@@ -403,39 +412,63 @@ def extract_schema_strings(input_path):
                 schema_lines = data.split("\n")
 
             ref_path = path.replace(input_path, "")
-            title = schema["title"].replace("\n", "</br/>")
-            entries.append(
-                dict(
-                    msgctxt=message_context,
-                    msgid=title,
-                    occurrences=[(ref_path, get_line(schema_lines, schema["title"]))],
+            # Extract title and description
+            title = schema.get("title")
+            if title is not None and JINJA2_I18N.match(title) is None:
+                entries.append(
+                    dict(
+                        msgctxt=message_context,
+                        msgid=title.replace("\n", "</br/>"),
+                        occurrences=[
+                            (ref_path, get_line(schema_lines, schema["title"]))
+                        ],
+                    )
                 )
-            )
-            desc = schema["description"].replace("\n", "</br/>")
-            entries.append(
-                dict(
-                    msgctxt=message_context,
-                    msgid=desc,
-                    occurrences=[
-                        (ref_path, get_line(schema_lines, schema["description"]))
-                    ],
+            desc = schema.get("description")
+            if desc is not None and JINJA2_I18N.match(desc) is None:
+                entries.append(
+                    dict(
+                        msgctxt=message_context,
+                        msgid=desc.replace("\n", "</br/>"),
+                        occurrences=[
+                            (ref_path, get_line(schema_lines, schema["description"]))
+                        ],
+                    )
                 )
-            )
-            for __, values in schema.get("properties", {}).items():
-                title = values.get("title", None)
-                if title is not None:
+            for values in schema.get("properties", {}).values():
+                title = values.get("title")
+                if title is not None and JINJA2_I18N.match(title) is None:
                     entries.append(
                         dict(
+                            msgctxt=message_context,
                             msgid=title.replace("\n", "</br/>"),
                             occurrences=[(ref_path, get_line(schema_lines, title))],
                         )
                     )
-                description = values.get("description", "")
+                description = values.get("description")
+                if description is not None and JINJA2_I18N.match(description) is None:
+                    entries.append(
+                        dict(
+                            msgctxt=message_context,
+                            msgid=description.replace("\n", "</br/>"),
+                            occurrences=[
+                                (ref_path, get_line(schema_lines, description))
+                            ],
+                        )
+                    )
+
+            # Extract jinja2 strings
+            for lineno, _, message in env.extract_translations(data):
+                if not isinstance(message, str):
+                    raise ValueError(
+                        "Only string with no arguments can be translated in schema."
+                        f'\nGot "{message}" line {lineno} in "{path}".'
+                    )
                 entries.append(
                     dict(
                         msgctxt=message_context,
-                        msgid=description.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, description))],
+                        msgid=message.replace("\n", "</br/>"),
+                        occurrences=[(ref_path, str(lineno))],
                     )
                 )
 
