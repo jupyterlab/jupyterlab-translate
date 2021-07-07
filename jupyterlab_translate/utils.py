@@ -86,8 +86,12 @@ def get_version(repo_root_path, project):
     if os.path.exists(repo_root_path) and not version:
         args = ["git", "describe", "--tags", "--abbrev=0"]
         try:
-            version = subprocess.check_output(args, cwd=repo_root_path).decode('utf-8').strip()
-            if version.startswith('v'):
+            version = (
+                subprocess.check_output(args, cwd=repo_root_path)
+                .decode("utf-8")
+                .strip()
+            )
+            if version.startswith("v"):
                 version = version[1:]
         except Exception:
             pass
@@ -217,7 +221,7 @@ def find_source_files(
 
 # --- .pot and .po generation
 # ----------------------------------------------------------------------------
-def extract_tsx_strings(input_path, pattern_path="**"):
+def extract_tsx_strings(input_path):
     """
     Use gettext-extract to extract strings from TSX files.
 
@@ -225,8 +229,6 @@ def extract_tsx_strings(input_path, pattern_path="**"):
     ----------
     temp_output_path: str
         FIXME:
-    pattern_path: str
-        prefix for pattern of paths to include
 
     Returns
     -------
@@ -289,8 +291,8 @@ def extract_tsx_strings(input_path, pattern_path="**"):
                 },
             ],
             "glob": {
-                "pattern": f"{pattern_path}/*.ts*(x)",
-                "options": {"ignore": f"{pattern_path}/*.spec.ts"},
+                "pattern": "**/*.ts*(x)",
+                "options": {"ignore": "{examples/**/*.ts*(x),**/*.spec.ts}"},
             },
             "comments": {"otherLineLeading": True},
         },
