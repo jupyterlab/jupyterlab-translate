@@ -83,6 +83,19 @@ def get_version(repo_root_path, project):
 
         version = data.get("version", "")
 
+    if os.path.exists(repo_root_path) and not version:
+        args = ["git", "describe", "--tags", "--abbrev=0"]
+        try:
+            version = (
+                subprocess.check_output(args, cwd=repo_root_path)
+                .decode("utf-8")
+                .strip()
+            )
+            if version.startswith("v"):
+                version = version[1:]
+        except Exception:
+            pass
+
     return version
 
 
@@ -222,10 +235,6 @@ def extract_tsx_strings(input_path):
     str
         FIXME:
     """
-    if input_path.split(os.sep)[-1] == "jupyterlab":
-        pattern_path = "packages"
-    else:
-        pattern_path = "src"
 
     __, output_path = tempfile.mkstemp(suffix=".pot")
     if "~" in input_path:
@@ -282,8 +291,8 @@ def extract_tsx_strings(input_path):
                 },
             ],
             "glob": {
-                "pattern": f"{pattern_path}/**/*.ts*(x)",
-                "options": {"ignore": f"{pattern_path}/**/*.spec.ts"},
+                "pattern": "**/*.ts*(x)",
+                "options": {"ignore": "{examples/**/*.ts*(x),**/*.spec.ts}"},
             },
             "comments": {"otherLineLeading": True},
         },
