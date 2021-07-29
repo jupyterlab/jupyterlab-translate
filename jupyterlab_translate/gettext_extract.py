@@ -1,17 +1,17 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import os
 import subprocess
 import sys
+from pathlib import Path
 
 # Constants
-HERE = os.path.abspath(os.path.dirname(__file__))
-INDEX_JS = os.path.join(HERE, "index.js")
+HERE = Path(__file__).parent.resolve()
+INDEX_JS = HERE / "index.js"
 
 
 def main():
     args = sys.argv[1:]
-    subprocess.Popen(["node", INDEX_JS] + args).communicate()
+    subprocess.check_call(["node", str(INDEX_JS)] + args)
 
 
 if __name__ == "__main__":

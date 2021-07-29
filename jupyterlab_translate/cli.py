@@ -5,12 +5,14 @@ Command line interface.
 """
 import click
 
-from .api import compile_language_pack
-from .api import compile_package
-from .api import extract_language_pack
-from .api import extract_package
-from .api import update_language_pack
-from .api import update_package
+from .api import (
+    compile_language_pack,
+    compile_package,
+    extract_language_pack,
+    extract_package,
+    update_language_pack,
+    update_package,
+)
 
 # --- Common arguments
 # ----------------------------------------------------------------------------

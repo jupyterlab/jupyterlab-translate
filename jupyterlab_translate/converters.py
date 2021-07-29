@@ -2,34 +2,28 @@
 # Distributed under the terms of the Modified BSD License.
 import ast
 import json
-import os
+from pathlib import Path
 
 import polib
 
 
-def convert_catalog_to_json(po_path, output_dir, project):
+def convert_catalog_to_json(po_path: Path, output_dir: Path, project: str) -> Path:
     """
     Convert the `.po` format to Jed json format merging any existing json files.
 
-    Parameters
-    ----------
-    po_path: str
-        FIXME:
-    output_dir: str
-        FIXME:
-    project: str
-        FIXME:
+    Args:
+        po_path: PO file path
+        output_dir: output directory
+        project: project name
 
-    Returns
-    -------
-    str:
-        FIXME:
+    Returns:
+        JSON file path
     """
-    json_name = os.path.basename(po_path).replace(".po", ".json")
-    json_path = os.path.join(output_dir, json_name)
+    json_name = po_path.with_suffix(".json").name
+    json_path = output_dir / json_name
 
     # Do not add column wrapping by using a large value!
-    po = polib.pofile(po_path, wrapwidth=100000)
+    po = polib.pofile(str(po_path), wrapwidth=100000)
 
     # Add metadata
     result = {
@@ -44,9 +38,8 @@ def convert_catalog_to_json(po_path, output_dir, project):
     nplurals_string = po.metadata["Plural-Forms"].split(";")[0]
     nplurals = ast.literal_eval(nplurals_string.replace("nplurals=", ""))
     # Load existing file in case some old strings need to remain
-    if os.path.isfile(json_path):
-        with open(json_path, "r") as fh:
-            data = json.load(fh)
+    if json_path.is_file():
+        data = json.loads(json_path.read_text())
 
         data.pop("")  # Remove old metadata
         result.update(data)
@@ -76,7 +69,6 @@ def convert_catalog_to_json(po_path, output_dir, project):
             if nplurals == 1:
                 plural[0] = plural[-1]
 
-    with open(json_path, "w") as fh:
-        fh.write(json.dumps(result, sort_keys=True, indent=4 * " "))
+    json_path.write_text(json.dumps(result, sort_keys=True, indent=4))
 
     return json_path

@@ -2,90 +2,66 @@
 # Distributed under the terms of the Modified BSD License.
 """
 """
-import importlib
 import json
 import os
-import shutil
 import subprocess
 import sys
 import tempfile
 from collections import OrderedDict
-from functools import partial
 from itertools import chain
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import babel
 import polib
 from cookiecutter.main import cookiecutter
 
-from .constants import COOKIECUTTER_URL
-from .constants import EXTENSIONS_FOLDER
-from .constants import JUPYTERLAB
-from .constants import LANG_PACKS_FOLDER
-from .constants import LC_MESSAGES
-from .constants import LOCALE_FOLDER
-from .constants import TRANSLATIONS_FOLDER
+from .constants import COOKIECUTTER_URL, GETTEXT_CONFIG, LC_MESSAGES, LOCALE_FOLDER
 
 # Constants
-HERE = os.path.abspath(os.path.dirname(__file__))
+HERE = Path(__file__).parent
 
 # --- Helpers
 # ----------------------------------------------------------------------------
-def get_version(repo_root_path, project):
+def get_version(repo_root_path: Path, project: str) -> str:
     """
-    FIXME:
+    Get the version of a language pack
 
-    Parameters
-    ----------
-    repo_root_path: str
-        FIXME:
-    project: str
-        FIXME:
+    Args:
+        repo_root_path: Path to the language pack
+        project: Project name
 
-    Returns
-    -------
-    str
-        Version string for project.
+    Returns:
+        Version string for project
     """
-    version_path = os.path.join(repo_root_path, project, "_version.py")
-    init_path = os.path.join(repo_root_path, project, "__init__.py")
-    pkg_path = os.path.join(repo_root_path, project, "package.json")
+    package = repo_root_path / project
 
     version = ""
-    # TODO: This is probably not robust enough, due to versioneer and friends
-    if os.path.isfile(version_path) and not version:
-        # Try `project/_version.py`
-        sys.path.append(repo_root_path)
-        try:
-            spec = importlib.util.spec_from_file_location(project, version_path)
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
-            version = module.__version__
-        except Exception:
-            pass
+    # Look for python version
+    try:
+        output = (
+            subprocess.check_output(
+                [sys.executable, "setup.py", "--version"], cwd=repo_root_path
+            )
+            .decode("utf8")
+            .strip()
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to get the Python package version for '{package!s}.")
+        print(e)
+    else:
+        version = output.splitlines()[-1]
 
-        sys.path.pop()
+    # Look for npm version
+    if not version:
+        pkg_path = package / "package.json"
 
-    if os.path.isfile(init_path) and not version:
-        # Try `project/__init__.py`
-        sys.path.append(repo_root_path)
-        try:
-            spec = importlib.util.spec_from_file_location(project, init_path)
-            init_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(init_module)
-            version = init_module.__version__
-        except Exception:
-            pass
+        if pkg_path.is_file():
+            data = json.loads(pkg_path.read_text())
+            version = data.get("version", "")
 
-        sys.path.pop()
-
-    if os.path.isfile(pkg_path) and not version:
-        # Try `package.json`
-        with open(pkg_path, "r") as fh:
-            data = json.load(fh)
-
-        version = data.get("version", "")
-
-    if os.path.exists(repo_root_path) and not version:
+    # Look for git version
+    if not version and repo_root_path.exists():
         args = ["git", "describe", "--tags", "--abbrev=0"]
         try:
             version = (
@@ -101,242 +77,192 @@ def get_version(repo_root_path, project):
     return version
 
 
-def create_new_language_pack(output_dir, locale, cookiecutter_url=COOKIECUTTER_URL):
+def create_new_language_pack(
+    output_dir: Union[str, Path], locale: str, cookiecutter_url: str = COOKIECUTTER_URL
+) -> None:
     """
     Creates a new language pack python package with cookiecutter.
 
-    Parameters
-    ----------
-    output_dir: str
-        FIXME:
-    locale: str
-        FIXME:
+    Args:
+        output_dir: Ouput directory for the language pack
+        locale: Locale
+        cookiecutter_url: Language pack template
     """
     if not check_locale(locale):
         raise Exception("Invalid locale!")
 
     loc = babel.Locale.parse(locale)
-    options = {"locale": locale.replace("_", "-"), "language": loc.english_name}
+    options = {
+        "locale": locale.replace("_", "-"),
+        "locale_underscore": locale,
+        "language": loc.english_name,
+    }
     cookiecutter(
-        COOKIECUTTER_URL, extra_context=options, no_input=True, output_dir=output_dir
+        cookiecutter_url,
+        extra_context=options,
+        no_input=True,
+        output_dir=str(output_dir),
     )
 
 
-def check_locale(locale):
+def check_locale(locale: str) -> bool:
     """Check if a locale is a valid value."""
     value = False
     try:
-        val = babel.Locale.parse(locale)
+        babel.Locale.parse(locale)
         value = True
     except Exception as e:
         print(str(e))
-        value = False
 
     return value
 
 
-def find_locales(output_dir):
+def find_locales(output_dir: Path) -> Tuple[str]:
     """
     Find available locales on the `output_dir` folder.
 
-    Parameters
-    ----------
-    output_dir: str
-        FIXME:
+    Args:
+        output_dir: Output folder
 
-    Returns
-    -------
-    tuple
+    Returns:
         Sorted locales found in the Jupyter language packs repository.
     """
     locales = set()
-    locale_path = os.path.join(output_dir, LOCALE_FOLDER)
-    folders = os.listdir(locale_path) if os.path.isdir(locale_path) else []
+    locale_path = output_dir / LOCALE_FOLDER
+    folders = locale_path.iterdir() if locale_path.is_dir() else []
     for locale_folder in folders:
-        if locale_folder not in locales and check_locale(locale_folder):
-            locales.add(locale_folder)
+        locale_name = locale_folder.name
+        if locale_name not in locales and check_locale(locale_name):
+            locales.add(locale_name)
 
     return tuple(sorted(locales))
 
 
 # --- Find source files
 # ----------------------------------------------------------------------------
-def find_packages_source_files(packages_path):
+def find_packages_source_files(
+    packages_path: Union[str, Path]
+) -> Dict[str, List[Path]]:
     """
-    FIXME:
+    List packages source files.
 
-    Parameters
-    ----------
-    packages_path: str
-        FIXME:
+    Args:
+        packages_path: Path to the packages root directory
 
-    Returns
-    -------
-    dict
-        FIXME:
+    Returns:
+        Mapping (package name, source files list)
     """
     package_files = OrderedDict()
-    for pkg_name in os.listdir(packages_path):
-        files = find_source_files(os.path.join(packages_path, pkg_name))
+    for pkg in Path(packages_path).iterdir():
+        files = find_source_files(pkg)
         if files:
-            package_files[pkg_name] = files
+            package_files[pkg.name] = files
 
     return package_files
 
 
 def find_source_files(
-    path,
-    extensions=(".ts", ".py"),
-    skip_folders=("tests", "test", "node_modules", "lib", ".git", ".ipynb_checkpoints"),
+    path: Path,
+    extensions: Set[str] = {".ts", ".tsx", ".py"},
+    skip_folders: Set[str] = {
+        "tests",
+        "test",
+        "node_modules",
+        "lib",
+        ".git",
+        ".ipynb_checkpoints",
+    },
 ):
     """
     Find source files in given `path`.
 
-    Parameters
-    ----------
-    extensions: sequence
-        FIXME:
-    skip_folders: sequence
-        FIXME:
+    Args:
+        path: Path to introspect
+        extensions: Set of extensions to list
+        skip_folders: Set of folders to ignore
 
     Returns
-    -------
-    list
-        FIXME:
+        List of files found
     """
     all_files = []
-    for root, _dirs, files in os.walk(path, topdown=False):
-        for name in files:
-            fpath = os.path.join(root, name)
-            if any(
-                "{sep}{skip_folder}{sep}".format(sep=os.sep, skip_folder=skip_folder)
-                in fpath
-                for skip_folder in skip_folders
-            ):
+    for ext in extensions:
+        for f in path.rglob(f"*{ext}"):
+            parents = set(map(lambda p: p.name, f.parents))
+            if len(parents.intersection(skip_folders)) > 0:
                 continue
 
-            if fpath.endswith(extensions):
-                all_files.append(fpath)
+            all_files.append(f)
 
     return all_files
 
 
 # --- .pot and .po generation
 # ----------------------------------------------------------------------------
-def extract_tsx_strings(input_path):
+def extract_tsx_strings(input_path: Union[str, Path]) -> List[Dict]:
     """
-    Use gettext-extract to extract strings from TSX files.
+    Use gettext-extract to extract strings from TS(X) files.
 
-    Parameters
-    ----------
-    temp_output_path: str
-        FIXME:
+    Args:
+        input_path: path to look for strings.
 
-    Returns
-    -------
-    str
-        FIXME:
+    Returns:
+        List of translatable strings
     """
+    input_path = Path(input_path).expanduser()
 
-    __, output_path = tempfile.mkstemp(suffix=".pot")
-    if "~" in input_path:
-        input_path = os.path.expanduser(input_path)
+    with tempfile.NamedTemporaryFile("w+", suffix=".pot") as output:
+        config = GETTEXT_CONFIG.copy()
+        config["output"] = output.name
 
-    roots = {"trans", "this._trans", "this.props.trans", "props.trans"}
-    functions = [
-        {"expression": "__", "arguments": {"text": 0}},
-        {"expression": "gettext", "arguments": {"text": 0}},
-        {"expression": "_n", "arguments": {"text": 0, "textPlural": 1}},
-        {"expression": "ngettext", "arguments": {"text": 0, "textPlural": 1}},
-        {"expression": "_p", "arguments": {"context": 0, "text": 1}},
-        {"expression": "pgettext", "arguments": {"context": 0, "text": 1}},
-        {"expression": "_np", "arguments": {"context": 0, "text": 1, "textPlural": 2}},
-        {
-            "expression": "npgettext",
-            "arguments": {"context": 0, "text": 1, "textPlural": 2},
-        },
-    ]
+        with tempfile.NamedTemporaryFile("w+", suffix=".json") as config_file:
+            json.dump(config, config_file)
+            config_file.seek(0)  # Rewind to file beginning
 
-    def build_parser(root: str, func: dict) -> dict:
-        f = func.copy()
-        f["expression"] = ".".join((root, f["expression"]))
-        return f
+            subprocess.run(["cat", config_file.name])
+            cmd = ["gettext-extract", "--config", config_file.name]
+            subprocess.check_call(cmd, cwd=input_path)
 
-    config = {
-        "js": {
-            "parsers": list(
-                chain(*[map(partial(build_parser, root), functions) for root in roots])
-            ),
-            "glob": {
-                "pattern": "**/*.ts*(x)",
-                "options": {"ignore": "{examples/**/*.ts*(x),**/*.spec.ts}"},
-            },
-            "comments": {"otherLineLeading": True},
-        },
-        "headers": {"Language": ""},
-        "output": output_path,
-    }
-    __, config_path = tempfile.mkstemp(suffix=".json")
-    with open(config_path, "w") as fh:
-        fh.write(json.dumps(config))
+        # Fix the missing format
+        output_path = Path(output.name)
+        output_path.write_text("#, fuzzy\n" + output_path.read_text())
 
-    cmd = ["gettext-extract", "--config", config_path]
-    p = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=input_path
-    )
-    stderr, stdout = p.communicate()
-    if p.returncode != 0:
-        raise Exception("`gettext-extract` error!")
+        entries = []
+        pot = polib.pofile(str(output_path), wrapwidth=100000)
+        for entry in pot:
+            occurrences = entry.occurrences
 
-    # Fix the missing format
-    with open(output_path, "r") as fh:
-        lines = ["#, fuzzy"] + fh.read().split("\n")
+            data = {"msgid": entry.msgid, "occurrences": occurrences}
 
-    with open(output_path, "w") as fh:
-        fh.write("\n".join(lines))
+            if entry.msgid_plural:
+                data["msgid_plural"] = entry.msgid_plural
+                data["msgstr_plural"] = entry.msgstr_plural
 
-    entries = []
-    pot = polib.pofile(output_path, wrapwidth=100000)
-    for entry in pot:
-        occurrences = []
-        for (string_fpath, line) in entry.occurrences:
-            # Convert absolute paths to relative paths
-            occurrences.append((string_fpath, line))
+            if entry.msgctxt:
+                data["msgctxt"] = entry.msgctxt
 
-        data = {"msgid": entry.msgid, "occurrences": occurrences}
+            if entry.comment:
+                data["comment"] = entry.comment
 
-        if entry.msgid_plural:
-            data["msgid_plural"] = entry.msgid_plural
-            data["msgstr_plural"] = entry.msgstr_plural
+            if entry.encoding:
+                data["encoding"] = entry.encoding
 
-        if entry.msgctxt:
-            data["msgctxt"] = entry.msgctxt
+            if entry.obsolete:
+                data["obsolete"] = entry.obsolete
 
-        if entry.comment:
-            data["comment"] = entry.comment
-
-        if entry.encoding:
-            data["encoding"] = entry.encoding
-
-        if entry.obsolete:
-            data["obsolete"] = entry.obsolete
-
-        entries.append(data)
-
-    try:
-        os.remove(config_path)
-    except Exception:
-        pass
-
-    try:
-        os.remove(input_path)
-    except Exception:
-        pass
+            entries.append(data)
 
     return entries
 
 
-def get_line(lines, value):
+def get_line(lines: List[str], value: str) -> str:
+    """Get the line position of the last ``value`` occurrence in ``lines``.
+
+    Args:
+        lines: Lines to inspect
+        value: Value searched for
+    Returns:
+        Position of ``value`` converted to string
+    """
     value1 = '"' + value + '"'
     value2 = "'" + value + "'"
     line_count = 0
@@ -349,65 +275,60 @@ def get_line(lines, value):
     return str(line_count)
 
 
-def extract_schema_strings(input_path):
+def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
     """
-    Use gettext-extract to extract strings from TSX files.
+    Use gettext-extract to extract strings from JSON schema files.
 
-    Parameters
-    ----------
-    temp_output_path: str
-        FIXME:
+    Args:
+        input_path:
 
     Returns
-    -------
-    str
-        FIXME:
+        List of translatable strings
     """
-    input_paths = find_source_files(input_path, extensions=("package.json",))
-    schema_paths = []
+    input_paths = find_source_files(Path(input_path), extensions=("package.json",))
+    schema_paths: List[Path] = []
     message_context = "schema"
 
     for path in input_paths:
-        if os.path.isfile(path):
-            with open(path, "r") as fh:
-                data = json.load(fh)
+        if path.is_file():
+            data = json.loads(path.read_text())
 
             schema_dir = data.get("jupyterlab", {}).get("schemaDir", None)
             if schema_dir is not None:
-                schema_path = os.path.join(os.path.dirname(path), schema_dir)
-                if os.path.isdir(schema_path):
-                    for p in os.listdir(schema_path):
-                        if p.endswith(".json"):
-                            schema_paths.append(os.path.join(schema_path, p))
+                schema_path = path.parent / schema_dir
+                if schema_path.is_dir():
+                    for p in schema_path.rglob("*.json"):
+                        schema_paths.append(p)
 
     entries = []
     for path in schema_paths:
-        if os.path.isfile(path):
-            with open(path, "r") as fh:
-                data = fh.read()
-                schema = json.loads(data)
-                schema_lines = data.split("\n")
+        if path.is_file():
+            data = path.read_text()
+            schema = json.loads(data)
+            schema_lines = data.splitlines()
 
-            ref_path = path.replace(input_path, "")
-            title = schema["title"].replace("\n", "</br/>")
-            entries.append(
-                dict(
-                    msgctxt=message_context,
-                    msgid=title,
-                    occurrences=[(ref_path, get_line(schema_lines, schema["title"]))],
+            ref_path = "/{!s}".format(path.relative_to(input_path))
+            title = schema.get("title", "")
+            if title:
+                entries.append(
+                    dict(
+                        msgctxt=message_context,
+                        msgid=title.replace("\n", "</br/>"),
+                        occurrences=[(ref_path, get_line(schema_lines, title))],
+                    )
                 )
-            )
-            desc = schema["description"].replace("\n", "</br/>")
-            entries.append(
-                dict(
-                    msgctxt=message_context,
-                    msgid=desc,
-                    occurrences=[
-                        (ref_path, get_line(schema_lines, schema["description"]))
-                    ],
+
+            desc = schema.get("description", "")
+            if desc:
+                entries.append(
+                    dict(
+                        msgctxt=message_context,
+                        msgid=desc.replace("\n", "</br/>"),
+                        occurrences=[(ref_path, get_line(schema_lines, desc))],
+                    )
                 )
-            )
-            for __, values in schema.get("properties", {}).items():
+
+            for values in schema.get("properties", {}).values():
                 title = values.get("title", None)
                 if title is not None:
                     entries.append(
@@ -428,75 +349,77 @@ def extract_schema_strings(input_path):
     return entries
 
 
-def extract_strings(input_paths, output_path, project, version):
+def extract_strings(
+    input_paths: List[Path], output_path: Union[str, Path], project: str, version: str
+) -> Path:
     """
     Extract localizable strings on input files.
 
-    Parameters
-    ----------
-    input_paths: list
-        FIXME:
-    output_path: str
-        FIXME:
-    project: str
-        FIXME:
-    version: str
-        FIXME:
+    Args:
+        input_paths: List of input folders
+        output_path: Output folder relative to the current one
+        project: Project name
+        version: Version
 
     Returns
-    -------
-    str
-        Output path.
+        Output path
     """
-    mapping = os.path.join(HERE, "pybabel_config.cfg")
+    mapping = HERE / "pybabel_config.cfg"
     cmd = [
         "pybabel",
         "extract",
         "--no-wrap",
         "--charset=utf-8",
         "-o",
-        output_path,
-        "--project={project}".format(project=project),
-        "--version={version}".format(version=version),
-        "--mapping={mapping}".format(mapping=mapping),
-    ] + input_paths
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.communicate()
-    return os.path.join(os.getcwd(), output_path)
+        str(output_path),
+        f"--project={project}",
+        f"--version={version}",
+        f"--mapping={mapping!s}",
+    ] + list(str(i) for i in input_paths)
+
+    subprocess.check_call(cmd)
+
+    return Path.cwd() / output_path
 
 
-def fix_location(path, pot_path, append_entries=None):
+def fix_location(
+    path_to_remove: str,
+    pot_path: Union[str, Path],
+    append_entries: Optional[List[Dict]] = None,
+) -> Dict[str, str]:
     """
     Remove any hardcoded paths on the pot file.
 
-    Parameters
-    ----------
-    pot_file: str
-        FIXME:
-    append_entries: list of dict
-        FIXME:
+    Args:
+        path: path to remove
+        pot_file: pot file path
+        append_entries: optional list of strings entries to append
+    Returns:
+        POT file metadata
     """
     # Do not add column wrapping by using a large value!
-    pot = polib.pofile(pot_path, wrapwidth=100000, check_for_duplicates=False)
-    remove_path = path
+    pot = polib.pofile(str(pot_path), wrapwidth=100000, check_for_duplicates=False)
+
     for entry in pot:
         new_occurrences = []
         string_fpaths = []
         lines = []
         for (string_fpath, line) in entry.occurrences:
             # Convert absolute paths to relative paths
-            string_fpaths.append(os.path.abspath(string_fpath))
+            string_fpaths.append(Path(string_fpath).resolve())
             lines.append(line)
 
             if line != "":
-                string_fpath = " ".join(string_fpaths).replace(remove_path, "")
+                string_fpath = " ".join(map(lambda p: str(p), string_fpaths)).replace(
+                    path_to_remove, ""
+                )
 
                 # Normalize paths
                 string_fpath = string_fpath.replace("\\", "/")
 
                 new_occurrences.append((string_fpath, line))
-                string_fpaths = []
-                lines = []
+                string_fpaths.clear()
+                lines.clear()
 
         entry.occurrences = new_occurrences
 
@@ -505,20 +428,26 @@ def fix_location(path, pot_path, append_entries=None):
             entry = polib.POEntry(**entry)
             pot.append(entry)
 
-    pot.save(pot_path)
+    pot.save(str(pot_path))
     return pot.metadata.copy()
 
 
-def remove_duplicates(pot_path, metadata):
+def remove_duplicates(pot_path: Path, metadata: Dict[str, str]) -> None:
     """
-    FIXME:
+    Remove duplicate strings in POT file
+
+    Args:
+        pot_path: POT file path
+        metadata: POT metadata
     """
-    old_pot_name = pot_path + ".bak"
-    os.rename(pot_path, old_pot_name)
-    pot = polib.pofile(old_pot_name, wrapwidth=100000, check_for_duplicates=False)
+    old_pot_name = pot_path.rename(f"{pot_path!s}.bak")
+
+    pot = polib.pofile(str(old_pot_name), wrapwidth=100000, check_for_duplicates=False)
+
     entries = {}
     entries_data = {}
     duplicates = set()
+
     for entry in pot:
         # Remove empty msgid
         if not bool(entry.msgid):
@@ -567,147 +496,140 @@ def remove_duplicates(pot_path, metadata):
     for item in sorted(entries, key=lambda x: entries[x][0].occurrences):
         po.append(entries[item][0])
 
-    po.save(pot_path)
+    po.save(str(pot_path))
 
-    with open(pot_path, "r") as fh:
-        data = fh.read()
+    pot_path.write_text(pot_path.read_text().replace(r"</br/>", r"\n"))
 
-    with open(pot_path, "w") as fh:
-        fh.write(data.replace(r"</br/>", r"\n"))
-
-    os.remove(old_pot_name)
+    old_pot_name.unlink()
 
 
-def create_catalog(repo_root_dir, locale_dir, project, version):
+def create_catalog(
+    repo_root_dir: Union[str, Path],
+    locale_dir: Union[str, Path],
+    project: str,
+    version: str,
+) -> Tuple[Path, Dict[str, str]]:
     """
-    FIXME:
+    Create a catalog
 
-    Parameters
-    ----------
-    repo_root_dir: str
-        FIXME:
-    locale_dir: str
-        FIXME:
-    project: str
-        FIXME:
-    version: str
-        FIXME:
+    Args:
+        repo_root_dir: Repository to extract translation from
+        locale_dir: POT file folder
+        project: project name
+        version: version
+    Returns:
+        Tuple (POT file path, POT metadata)
     """
-    pot_path = os.path.join(locale_dir, "{project}.pot".format(project=project))
+    pot_path = Path(locale_dir) / f"{project}.pot"
     nested_files = find_packages_source_files(repo_root_dir)
-    flat_files = [item for sublist in nested_files.values() for item in sublist]
+    flat_files = list(chain(*nested_files.values()))
     extract_strings(flat_files, pot_path, project, version=version)
-    append_entries_tsx = extract_tsx_strings(repo_root_dir)
-    append_entries_schemas = extract_schema_strings(repo_root_dir)
-    print(
-        "\nTotal entries: {}\n".format(
-            len(append_entries_schemas) + len(append_entries_tsx)
-        )
+    append_entries = extract_tsx_strings(repo_root_dir) + extract_schema_strings(
+        repo_root_dir
     )
-    metadata = fix_location(
-        repo_root_dir, pot_path, append_entries_tsx + append_entries_schemas
-    )
+    print("\nTotal entries: {}\n".format(len(append_entries)))
+    metadata = fix_location(str(repo_root_dir), pot_path, append_entries)
     return pot_path, metadata
 
 
-def update_catalogs(pot_path, output_dir, locale):
+def update_catalogs(
+    pot_path: Union[str, Path], output_dir: Union[str, Path], locale: str
+):
     """
     Create new locale `.po` files or update and merge if they already exist.
 
-    Parameters
-    ----------
-    pot_path: str
-        Path to `.pot` file.
-    output_dir: str
-        Path to base output directory. The `.po` files will be placed in
-        "{output_dir}/{locale}/LC_MESSAGES/{domain}.po".
-        Domain will be infered from the `pot_path`.
-    locale: str
-        FIXME:
+    Args:
+        pot_path: Path to `.pot` file.
+        output_dir: Path to base output directory. The `.po` files will be placed in
+            "{output_dir}/{locale}/LC_MESSAGES/{domain}.po".
+            Domain will be infered from the `pot_path`.
+        locale: Locale
     """
+    # Check if locale exists!
     if not check_locale(locale):
         return
 
-    pot_path = pot_path.replace("\\", "/")
-    domain = pot_path.rsplit("/")[-1].replace(".pot", "")
+    domain = Path(pot_path).stem
+    po_path = f"{output_dir!s}/{locale}/LC_MESSAGES/{domain}.po"
 
-    # Check if locale exists!
-    po_path = "{output_dir}/{locale}/LC_MESSAGES/{domain}.po".format(
-        output_dir=output_dir, locale=locale, domain=domain
-    )
     command = "update" if os.path.isfile(po_path) else "init"
+
     cmd = [
         "pybabel",
         command,
-        "--domain={domain}".format(domain=domain),
-        "--input-file={pot_path}".format(pot_path=pot_path),
-        "--output-dir={output_dir}".format(output_dir=output_dir),
-        "--locale={locale}".format(locale=locale),
+        f"--domain={domain}",
+        f"--input-file={pot_path!s}",
+        f"--output-dir={output_dir!s}",
+        f"--locale={locale}",
     ]
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.communicate()
+
+    subprocess.check_call(cmd)
 
 
-def compile_catalog(locale_dir, domain, locale):
+def compile_catalog(locale_dir: Path, domain: str, locale: str) -> Path:
     """
     Compile `*.po` files into `*.mo` files and saved them next to the
     original po files found.
 
-    Parameters
-    ----------
-    output_dir: str
-        FIXME:
-    domain: str
-        FIXME:
-    locale: str, optional
-        FIXME:
+    Args:
+        output_dir: Catalog output director
+        domain: Catalog domain
+        locale: locale
+    Returns:
+        Compile catalog file
     """
     # Check if locale exists!
     cmd = [
         "pybabel",
         "compile",
-        "--domain={domain}".format(domain=domain),
-        "--dir={locale_dir}".format(locale_dir=locale_dir),
-        "--locale={locale}".format(locale=locale),
+        f"--domain={domain}",
+        f"--dir={locale_dir!s}",
+        f"--locale={locale}",
     ]
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    p.communicate()
+    subprocess.check_call(cmd)
 
-    return os.path.join(
-        locale_dir, locale, LC_MESSAGES, "{domain}.po".format(domain=domain)
-    )
+    return locale_dir / locale / LC_MESSAGES / f"{domain}.po"
 
 
-def compile_to_mo(po_path):
-    po = polib.pofile(po_path)
-    mo_path = po_path.replace(".po", ".mo")
-    po.save_as_mofile(mo_path)
+def compile_to_mo(po_path: Path) -> Path:
+    """Compile .po file into .mo file.
+
+    Args:
+        po_path: .po file to compile
+    Returns:
+        Path to the compiled .mo file
+    """
+    po = polib.pofile(str(po_path))
+    mo_path = po_path.with_suffix(".mo")
+    po.save_as_mofile(str(mo_path))
     return mo_path
 
 
 # --- Global methods
 # ----------------------------------------------------------------------------
-def extract_translations(repo_root_dir, output_dir, project):
+def extract_translations(
+    repo_root_dir: Union[str, Path], output_dir: Union[str, Path], project: str
+) -> Path:
     """
-    FIXME:
+    Extract translations from a package folder
 
-    Parameters
-    ----------
-    repo_root_dir:
-        FIXME:
-    ouput_dir:
-        FIXME:
-    project:
-        FIXME:
+    Args:
+        repo_root_dir: package folder to extract translation from
+        ouput_dir: output folder
+        project: project name
+    Returns:
+        Generated POT file path
     """
     # Load version from setup.py
     version = get_version(repo_root_dir, project)
 
     # Extract pot file
-    locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
-    os.makedirs(locale_dir, exist_ok=True)
+    locale_dir = Path(output_dir) / LOCALE_FOLDER
+    locale_dir.mkdir(parents=True, exist_ok=True)
+
     pot_path, metadata = create_catalog(repo_root_dir, locale_dir, project, version)
     remove_duplicates(pot_path, metadata)
+
     return pot_path
 
 
@@ -726,6 +648,7 @@ def update_translations(repo_root_dir, output_dir, project, locales=None):
     locales: sequence
         FIXME:
     """
+    raise NotImplementedError("update_translations not implemented")
     # # Find locales, if not there, error?
     # locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
     # if locales is None:
@@ -743,31 +666,25 @@ def update_translations(repo_root_dir, output_dir, project, locales=None):
         update_catalogs(pot_path, locale_dir, locale)
 
 
-def compile_translations(output_dir, project, locales=None):
+def compile_translations(
+    output_dir: Path, project: str, locales: List[str] = None
+) -> Dict[str, Path]:
     """
-    FIXME:
+    Compile the translation for the given ``project`` in the provided output directory.
 
-    Parameters
-    ----------
-    output_dir: str
-        FIXME:
-    project: str
-        FIXME:
-    locales: sequence
-        FIXME:
-
-    Returns
-    -------
-    dict
-        FIXME:
+    Args:
+        output_dir: Output directory
+        project: Project name
+        locales: Locale list
+    Returns:
+        Mapping (locale, catalog file)
     """
     if locales is None:
         locales = find_locales(output_dir)
 
-    locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
+    locale_dir = output_dir / LOCALE_FOLDER
     po_paths = {}
     for locale in locales:
-        po_path = compile_catalog(locale_dir, project, locale)
-        po_paths[locale] = po_path
+        po_paths[locale] = compile_catalog(locale_dir, project, locale)
 
     return po_paths
