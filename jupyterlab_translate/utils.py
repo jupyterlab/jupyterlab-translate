@@ -10,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 from collections import OrderedDict
+from functools import partial
+from itertools import chain
 
 import babel
 import polib
@@ -240,56 +242,31 @@ def extract_tsx_strings(input_path):
     if "~" in input_path:
         input_path = os.path.expanduser(input_path)
 
+    roots = {"trans", "this._trans", "this.props.trans", "props.trans"}
+    functions = [
+        {"expression": "__", "arguments": {"text": 0}},
+        {"expression": "gettext", "arguments": {"text": 0}},
+        {"expression": "_n", "arguments": {"text": 0, "textPlural": 1}},
+        {"expression": "ngettext", "arguments": {"text": 0, "textPlural": 1}},
+        {"expression": "_p", "arguments": {"context": 0, "text": 1}},
+        {"expression": "pgettext", "arguments": {"context": 0, "text": 1}},
+        {"expression": "_np", "arguments": {"context": 0, "text": 1, "textPlural": 2}},
+        {
+            "expression": "npgettext",
+            "arguments": {"context": 0, "text": 1, "textPlural": 2},
+        },
+    ]
+
+    def build_parser(root: str, func: dict) -> dict:
+        f = func.copy()
+        f["expression"] = ".".join((root, f["expression"]))
+        return f
+
     config = {
         "js": {
-            "parsers": [
-                {"expression": "trans.__", "arguments": {"text": 0}},
-                {"expression": "this._trans.__", "arguments": {"text": 0}},
-                {"expression": "trans.gettext", "arguments": {"text": 0}},
-                {"expression": "this._trans.gettext", "arguments": {"text": 0}},
-                {"expression": "trans._n", "arguments": {"text": 0, "textPlural": 1}},
-                {
-                    "expression": "this._trans._n",
-                    "arguments": {"text": 0, "textPlural": 1},
-                },
-                {
-                    "expression": "trans.ngettext",
-                    "arguments": {"text": 0, "textPlural": 1},
-                },
-                {
-                    "expression": "this._trans.ngettext",
-                    "arguments": {"text": 0, "textPlural": 1},
-                },
-                {"expression": "trans._p", "arguments": {"context": 0, "text": 1}},
-                {
-                    "expression": "this._trans._p",
-                    "arguments": {"context": 0, "text": 1},
-                },
-                {
-                    "expression": "trans.pgettext",
-                    "arguments": {"context": 0, "text": 1},
-                },
-                {
-                    "expression": "this._trans.pgettext",
-                    "arguments": {"context": 0, "text": 1},
-                },
-                {
-                    "expression": "trans._np",
-                    "arguments": {"context": 0, "text": 1, "textPlural": 2},
-                },
-                {
-                    "expression": "this._trans._np",
-                    "arguments": {"context": 0, "text": 1, "textPlural": 2},
-                },
-                {
-                    "expression": "trans.npgettext",
-                    "arguments": {"context": 0, "text": 1, "textPlural": 2},
-                },
-                {
-                    "expression": "this._trans.npgettext",
-                    "arguments": {"context": 0, "text": 1, "textPlural": 2},
-                },
-            ],
+            "parsers": list(
+                chain(*[map(partial(build_parser, root), functions) for root in roots])
+            ),
             "glob": {
                 "pattern": "**/*.ts*(x)",
                 "options": {"ignore": "{examples/**/*.ts*(x),**/*.spec.ts}"},
