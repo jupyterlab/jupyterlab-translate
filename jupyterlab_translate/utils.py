@@ -16,7 +16,13 @@ import babel
 import polib
 from cookiecutter.main import cookiecutter
 
-from .constants import COOKIECUTTER_URL, COOKIECUTTER_REF, GETTEXT_CONFIG, LC_MESSAGES, LOCALE_FOLDER
+from .constants import (
+    COOKIECUTTER_URL,
+    COOKIECUTTER_REF,
+    GETTEXT_CONFIG,
+    LC_MESSAGES,
+    LOCALE_FOLDER,
+)
 
 # Constants
 HERE = Path(__file__).parent
