@@ -8,7 +8,7 @@ import shutil
 from pathlib import Path
 from typing import List, Union
 
-from .constants import EXTENSIONS_FOLDER, JUPYTERLAB, LANG_PACKS_FOLDER
+from .constants import EXTENSIONS_FOLDER, JUPYTERLAB, LANG_PACKS_FOLDER, LC_MESSAGES, LOCALE_FOLDER
 from .converters import convert_catalog_to_json
 from .utils import (
     check_locale,
@@ -149,7 +149,7 @@ def compile_language_pack(
 
         # Move to language pack folder
         language_packs_dir = language_packs_repo_dir / LANG_PACKS_FOLDER
-        pkg_name = "jupyterlab-language-pack-{locale}".format(locale=locale).replace(
+        pkg_name = f"jupyterlab-language-pack-{locale}".replace(
             "_", "-"
         )
         locale_language_pack_dir = (
@@ -159,14 +159,16 @@ def compile_language_pack(
         # Check if it exists, otherwise create it
         if not locale_language_pack_dir.is_dir():
             create_new_language_pack(language_packs_dir, locale)
+        
+        output_dir = locale_language_pack_dir / LOCALE_FOLDER / locale.replace("-", "_") / LC_MESSAGES
 
-        if project == JUPYTERLAB:
-            output_dir = locale_language_pack_dir
-        else:
-            output_dir = locale_language_pack_dir / EXTENSIONS_FOLDER
+        target_mo = output_dir / mo_path.name
+        if target_mo.exists():
+            target_mo.unlink()
+        mo_path.rename(target_mo)
 
-        shutil.rmtree(str(output_dir / mo_path.name), ignore_errors=True)
-        shutil.rmtree(str(output_dir / json_path.name), ignore_errors=True)
-
-        shutil.move(str(mo_path), str(output_dir / mo_path.name))
-        shutil.move(str(json_path), str(output_dir / json_path.name))
+        target_json = output_dir / json_path.name
+        if target_json.exists():
+            target_json.unlink()
+        json_path.rename(target_json)
+        

@@ -16,7 +16,7 @@ import babel
 import polib
 from cookiecutter.main import cookiecutter
 
-from .constants import COOKIECUTTER_URL, GETTEXT_CONFIG, LC_MESSAGES, LOCALE_FOLDER
+from .constants import COOKIECUTTER_URL, COOKIECUTTER_REF, GETTEXT_CONFIG, LC_MESSAGES, LOCALE_FOLDER
 
 # Constants
 HERE = Path(__file__).parent
@@ -78,7 +78,10 @@ def get_version(repo_root_path: Path, project: str) -> str:
 
 
 def create_new_language_pack(
-    output_dir: Union[str, Path], locale: str, cookiecutter_url: str = COOKIECUTTER_URL
+    output_dir: Union[str, Path],
+    locale: str,
+    cookiecutter_url: str = COOKIECUTTER_URL,
+    cookiecutter_ref: str = COOKIECUTTER_REF,
 ) -> None:
     """
     Creates a new language pack python package with cookiecutter.
@@ -87,6 +90,7 @@ def create_new_language_pack(
         output_dir: Ouput directory for the language pack
         locale: Locale
         cookiecutter_url: Language pack template
+        cookiecutter_ref: Template git reference
     """
     if not check_locale(locale):
         raise Exception("Invalid locale!")
@@ -99,6 +103,7 @@ def create_new_language_pack(
     }
     cookiecutter(
         cookiecutter_url,
+        checkout=cookiecutter_ref,
         extra_context=options,
         no_input=True,
         output_dir=str(output_dir),
