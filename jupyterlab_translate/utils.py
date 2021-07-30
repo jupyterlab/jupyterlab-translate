@@ -10,19 +10,22 @@ import tempfile
 from collections import OrderedDict
 from itertools import chain
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Union
 
 import babel
 import polib
 from cookiecutter.main import cookiecutter
 
-from .constants import (
-    COOKIECUTTER_URL,
-    COOKIECUTTER_REF,
-    GETTEXT_CONFIG,
-    LC_MESSAGES,
-    LOCALE_FOLDER,
-)
+from .constants import COOKIECUTTER_REF
+from .constants import COOKIECUTTER_URL
+from .constants import GETTEXT_CONFIG
+from .constants import LC_MESSAGES
+from .constants import LOCALE_FOLDER
 
 # Constants
 HERE = Path(__file__).parent

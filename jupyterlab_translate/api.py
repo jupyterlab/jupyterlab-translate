@@ -6,24 +6,21 @@ API interface.
 import os
 import shutil
 from pathlib import Path
-from typing import List, Union
+from typing import List
+from typing import Union
 
-from .constants import (
-    EXTENSIONS_FOLDER,
-    JUPYTERLAB,
-    LANG_PACKS_FOLDER,
-    LC_MESSAGES,
-    LOCALE_FOLDER,
-)
+from .constants import EXTENSIONS_FOLDER
+from .constants import JUPYTERLAB
+from .constants import LANG_PACKS_FOLDER
+from .constants import LC_MESSAGES
+from .constants import LOCALE_FOLDER
 from .converters import convert_catalog_to_json
-from .utils import (
-    check_locale,
-    compile_to_mo,
-    compile_translations,
-    create_new_language_pack,
-    extract_translations,
-    update_translations,
-)
+from .utils import check_locale
+from .utils import compile_to_mo
+from .utils import compile_translations
+from .utils import create_new_language_pack
+from .utils import extract_translations
+from .utils import update_translations
 
 
 def check_locales(locales: List[str]):
