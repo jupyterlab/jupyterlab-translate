@@ -5,6 +5,9 @@ API interface.
 """
 import os
 import shutil
+from pathlib import Path
+from typing import List
+from typing import Union
 
 from .constants import EXTENSIONS_FOLDER
 from .constants import JUPYTERLAB
@@ -20,30 +23,30 @@ from .utils import extract_translations
 from .utils import update_translations
 
 
-def check_locales(locales):
+def check_locales(locales: List[str]):
     """
     Check if a given list  of locale values is valid.
 
     Raises an exception if an invalid locale value is found.
 
-    Parameters
-    ----------
-    locales: list
-        List of locales
+    Args:
+        locales: List of locales
+    Raises:
+        ValueError: if the local is not valid.
     """
     for locale in locales:
         if not check_locale(locale):
-            raise Exception("Invalid locale '{locale}'".format(locale=locale))
+            raise ValueError(f"Invalid locale '{locale}'".format(locale=locale))
 
 
-def normalize_project(project):
+def normalize_project(project: str) -> str:
     """
-    FIXME:
+    Normalize a project name
 
-    Parameters
-    ----------
-    project: str
-        FIXME:
+    Args:
+        project: project name
+    Returns:
+        The normalized project name
     """
     return project.lower().replace("-", "_")
 
@@ -52,6 +55,7 @@ def extract_package(package_repo_dir, project):
     """
     FIXME:
     """
+    raise NotImplementedError("extract_package")
 
 
 def update_package(package_repo_dir, project, locales):
@@ -122,50 +126,54 @@ def update_language_pack(package_repo_dir, language_packs_repo_dir, project, loc
     update_translations(package_repo_dir, output_dir, project, locales)
 
 
-def compile_language_pack(language_packs_repo_dir, project, locales):
+def compile_language_pack(
+    language_packs_repo_dir: Union[Path, str], project: str, locales: List[str]
+) -> None:
     """
     FIXME:
     """
+    language_packs_repo_dir = Path(language_packs_repo_dir)
+
     if locales:
         check_locales(locales)
 
     project = normalize_project(project)
 
     if project == JUPYTERLAB:
-        output_dir = os.path.join(language_packs_repo_dir, project)
+        output_dir = language_packs_repo_dir / project
     else:
-        output_dir = os.path.join(language_packs_repo_dir, EXTENSIONS_FOLDER, project)
+        output_dir = language_packs_repo_dir / EXTENSIONS_FOLDER / project
 
     po_paths = compile_translations(output_dir, project, locales)
     for locale, po_path in po_paths.items():
-        output_path = os.path.dirname(po_path)
+        output_path = po_path.parent
         json_path = convert_catalog_to_json(po_path, output_path, project)
         mo_path = compile_to_mo(po_path)
 
         # Move to language pack folder
-        language_packs_dir = os.path.join(language_packs_repo_dir, LANG_PACKS_FOLDER)
-        pkg_name = "jupyterlab-language-pack-{locale}".format(locale=locale).replace(
-            "_", "-"
-        )
-        locale_language_pack_dir = os.path.join(
-            language_packs_dir, pkg_name, pkg_name.replace("-", "_")
+        language_packs_dir = language_packs_repo_dir / LANG_PACKS_FOLDER
+        pkg_name = f"jupyterlab-language-pack-{locale}".replace("_", "-")
+        locale_language_pack_dir = (
+            language_packs_dir / pkg_name / pkg_name.replace("-", "_")
         )
 
         # Check if it exists, otherwise create it
-        if not os.path.isdir(locale_language_pack_dir):
+        if not locale_language_pack_dir.is_dir():
             create_new_language_pack(language_packs_dir, locale)
 
-        if project == JUPYTERLAB:
-            output_dir = os.path.join(locale_language_pack_dir)
-        else:
-            output_dir = os.path.join(locale_language_pack_dir, EXTENSIONS_FOLDER)
-
-        shutil.rmtree(
-            os.path.join(output_dir, os.path.basename(mo_path)), ignore_errors=True
-        )
-        shutil.rmtree(
-            os.path.join(output_dir, os.path.basename(json_path)), ignore_errors=True
+        output_dir = (
+            locale_language_pack_dir
+            / LOCALE_FOLDER
+            / locale.replace("-", "_")
+            / LC_MESSAGES
         )
 
-        shutil.move(mo_path, os.path.join(output_dir, os.path.basename(mo_path)))
-        shutil.move(json_path, os.path.join(output_dir, os.path.basename(json_path)))
+        target_mo = output_dir / mo_path.name
+        if target_mo.exists():
+            target_mo.unlink()
+        mo_path.rename(target_mo)
+
+        target_json = output_dir / json_path.name
+        if target_json.exists():
+            target_json.unlink()
+        json_path.rename(target_json)
