@@ -4,6 +4,8 @@
 """
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -289,13 +291,65 @@ def get_line(lines: List[str], value: str) -> str:
     return str(line_count)
 
 
+def _extract_schema_strings(
+    schema: dict, schema_lines: list, ref_path: str, prefix: str = ""
+):
+    message_context = "schema"
+
+    to_translate = [
+        "title",
+        "description",
+        "properties/.*/title",
+        "properties/.*/description",
+        "definitions/properties/.*/title",
+        "definitions/properties/.*/description",
+        # JupyterLab-specific
+        "jupyter.lab.setting-icon-label",
+        "jupyter.lab.menus/.*/label"
+        # TODO: toolbar?
+        # TODO: add custom paths specified in jupyter.lab.internationalization
+    ]
+    to_translate = [re.compile("^/" + pattern + "$") for pattern in to_translate]
+
+    entries = []
+
+    for key, value in schema.items():
+        path = prefix + "/" + key
+
+        if isinstance(value, str):
+            if any([pattern.fullmatch(path) is not None for pattern in to_translate]):
+                text = value.replace("\n", "</br/>")
+                entries.append(
+                    dict(
+                        # TODO should we add the path to context? It seems that it could be useful for translators,
+                        #      but would this be backward-compatible with existing translations?
+                        msgctxt=message_context,
+                        msgid=text,
+                        occurrences=[(ref_path, get_line(schema_lines, value))],
+                    )
+                )
+        elif isinstance(value, dict):
+            entries.extend(
+                _extract_schema_strings(value, schema_lines, ref_path, prefix=path)
+            )
+        elif isinstance(value, list):
+            for i, element in enumerate(value):
+                entries.extend(
+                    _extract_schema_strings(
+                        element,
+                        schema_lines,
+                        ref_path,
+                        prefix=path + "[" + str(i) + "]",
+                    )
+                )
+    return entries
+
+
 def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
     """
     Use gettext-extract to extract strings from JSON schema files.
-
     Args:
         input_path:
-
     Returns
         List of translatable strings
     """
@@ -320,45 +374,8 @@ def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
             data = path.read_text()
             schema = json.loads(data)
             schema_lines = data.splitlines()
-
             ref_path = "/{!s}".format(path.relative_to(input_path))
-            title = schema.get("title", "")
-            if title:
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=title.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, title))],
-                    )
-                )
-
-            desc = schema.get("description", "")
-            if desc:
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=desc.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, desc))],
-                    )
-                )
-
-            for values in schema.get("properties", {}).values():
-                title = values.get("title", None)
-                if title is not None:
-                    entries.append(
-                        dict(
-                            msgid=title.replace("\n", "</br/>"),
-                            occurrences=[(ref_path, get_line(schema_lines, title))],
-                        )
-                    )
-                description = values.get("description", "")
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=description.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, description))],
-                    )
-                )
+            entries.extend(_extract_schema_strings(schema, schema_lines, ref_path))
 
     return entries
 
