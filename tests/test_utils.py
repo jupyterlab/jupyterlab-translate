@@ -1,6 +1,7 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
 import json
+
 from jupyterlab_translate.utils import _extract_schema_strings
 
 
@@ -23,4 +24,6 @@ def test_extract_from_settings():
         "Editor",
         "Editor Configuration",
         "Text editor settings.",
+        "Cursor blinking rate",
+        "Half-period in milliseconds used for cursor blinking. The default blink rate is 530ms. By setting this to zero, blinking can be disabled. A negative value hides the cursor entirely.",
     }

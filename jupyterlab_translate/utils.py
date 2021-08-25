@@ -305,10 +305,12 @@ def _extract_schema_strings(
         "definitions/.*/properties/.*/description",
         # JupyterLab-specific
         "jupyter.lab.setting-icon-label",
-        "jupyter.lab.menus/.*/label"
-        "jupyter.lab.toolbars/.*/label"
+        "jupyter.lab.menus/.*/label",
+        "jupyter.lab.toolbars/.*/label",
     ]
-    to_translate += schema.get("jupyter.lab.internationalization", {}).get("selectors", [])
+    to_translate += schema.get("jupyter.lab.internationalization", {}).get(
+        "selectors", []
+    )
     to_translate = [re.compile("^/" + pattern + "$") for pattern in to_translate]
 
     entries = []
@@ -321,8 +323,6 @@ def _extract_schema_strings(
                 text = value.replace("\n", "</br/>")
                 entries.append(
                     dict(
-                        # TODO should we add the path to context? It seems that it could be useful for translators,
-                        #      but would this be backward-compatible with existing translations?
                         msgctxt=message_context,
                         msgid=text,
                         occurrences=[(ref_path, get_line(schema_lines, value))],
@@ -603,7 +603,7 @@ def compile_catalog(locale_dir: Path, domain: str, locale: str) -> Path:
     original po files found.
 
     Args:
-        output_dir: Catalog output director
+        locale_dir: Catalog output director
         domain: Catalog domain
         locale: locale
     Returns:
@@ -646,7 +646,7 @@ def extract_translations(
 
     Args:
         repo_root_dir: package folder to extract translation from
-        ouput_dir: output folder
+        output_dir: output folder
         project: project name
     Returns:
         Generated POT file path
