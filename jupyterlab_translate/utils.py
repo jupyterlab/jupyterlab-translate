@@ -301,14 +301,14 @@ def _extract_schema_strings(
         "description",
         "properties/.*/title",
         "properties/.*/description",
-        "definitions/properties/.*/title",
-        "definitions/properties/.*/description",
+        "definitions/.*/properties/.*/title",
+        "definitions/.*/properties/.*/description",
         # JupyterLab-specific
         "jupyter.lab.setting-icon-label",
         "jupyter.lab.menus/.*/label"
-        # TODO: toolbar?
-        # TODO: add custom paths specified in jupyter.lab.internationalization
+        "jupyter.lab.toolbars/.*/label"
     ]
+    to_translate += schema.get("jupyter.lab.internationalization", {}).get("selectors", [])
     to_translate = [re.compile("^/" + pattern + "$") for pattern in to_translate]
 
     entries = []
