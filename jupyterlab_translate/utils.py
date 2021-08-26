@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Pattern
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -309,7 +310,7 @@ DEFAULT_SCHEMA_SELECTORS = {
 }
 
 
-def _extract_schema_strings(schema: dict, ref_path: str, prefix: str = ""):
+def _prepare_schema_patterns(schema: dict) -> Dict[Pattern, str]:
     selectors = {
         **DEFAULT_SCHEMA_SELECTORS,
         **{
@@ -319,10 +320,20 @@ def _extract_schema_strings(schema: dict, ref_path: str, prefix: str = ""):
             )
         },
     }
-    to_translate = {
+    return {
         re.compile("^/" + pattern + "$"): context
         for pattern, context in selectors.items()
     }
+
+
+def _extract_schema_strings(
+    schema: dict,
+    ref_path: str,
+    prefix: str = "",
+    to_translate: Dict[Pattern, str] = None,
+):
+    if to_translate is None:
+        to_translate = _prepare_schema_patterns(schema)
 
     entries = []
 
@@ -347,7 +358,11 @@ def _extract_schema_strings(schema: dict, ref_path: str, prefix: str = ""):
                     )
                 )
         elif isinstance(value, dict):
-            entries.extend(_extract_schema_strings(value, ref_path, prefix=path))
+            entries.extend(
+                _extract_schema_strings(
+                    value, ref_path, prefix=path, to_translate=to_translate
+                )
+            )
         elif isinstance(value, list):
             for i, element in enumerate(value):
                 entries.extend(
@@ -355,6 +370,7 @@ def _extract_schema_strings(schema: dict, ref_path: str, prefix: str = ""):
                         element,
                         ref_path,
                         prefix=path + "[" + str(i) + "]",
+                        to_translate=to_translate,
                     )
                 )
     return entries
