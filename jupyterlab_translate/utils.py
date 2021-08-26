@@ -4,6 +4,8 @@
 """
 import json
 import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +15,7 @@ from pathlib import Path
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Pattern
 from typing import Set
 from typing import Tuple
 from typing import Union
@@ -289,13 +292,95 @@ def get_line(lines: List[str], value: str) -> str:
     return str(line_count)
 
 
+_default_schema_context = "schema"
+_default_settings_context = "settings"
+
+# mapping of selector to translation context
+DEFAULT_SCHEMA_SELECTORS = {
+    "title": _default_schema_context,
+    "description": _default_schema_context,
+    "properties/.*/title": _default_settings_context,
+    "properties/.*/description": _default_settings_context,
+    "definitions/.*/properties/.*/title": _default_settings_context,
+    "definitions/.*/properties/.*/description": _default_settings_context,
+    # JupyterLab-specific
+    "jupyter.lab.setting-icon-label": _default_settings_context,
+    "jupyter.lab.menus/.*/label": "menu",
+    "jupyter.lab.toolbars/.*/label": "toolbar",
+}
+
+
+def _prepare_schema_patterns(schema: dict) -> Dict[Pattern, str]:
+    selectors = {
+        **DEFAULT_SCHEMA_SELECTORS,
+        **{
+            selector: _default_schema_context
+            for selector in schema.get("jupyter.lab.internationalization", {}).get(
+                "selectors", []
+            )
+        },
+    }
+    return {
+        re.compile("^/" + pattern + "$"): context
+        for pattern, context in selectors.items()
+    }
+
+
+def _extract_schema_strings(
+    schema: dict,
+    ref_path: str,
+    prefix: str = "",
+    to_translate: Dict[Pattern, str] = None,
+):
+    if to_translate is None:
+        to_translate = _prepare_schema_patterns(schema)
+
+    entries = []
+
+    for key, value in schema.items():
+        path = prefix + "/" + key
+
+        if isinstance(value, str):
+            matched = False
+            pattern_context = None
+            for pattern, context in to_translate.items():
+                if pattern.fullmatch(path):
+                    matched = True
+                    pattern_context = context
+                    break
+            if matched:
+                text = value.replace("\n", "</br/>")
+                entries.append(
+                    dict(
+                        msgctxt=context,
+                        msgid=text,
+                        occurrences=[(ref_path, path)],
+                    )
+                )
+        elif isinstance(value, dict):
+            entries.extend(
+                _extract_schema_strings(
+                    value, ref_path, prefix=path, to_translate=to_translate
+                )
+            )
+        elif isinstance(value, list):
+            for i, element in enumerate(value):
+                entries.extend(
+                    _extract_schema_strings(
+                        element,
+                        ref_path,
+                        prefix=path + "[" + str(i) + "]",
+                        to_translate=to_translate,
+                    )
+                )
+    return entries
+
+
 def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
     """
     Use gettext-extract to extract strings from JSON schema files.
-
     Args:
         input_path:
-
     Returns
         List of translatable strings
     """
@@ -319,46 +404,8 @@ def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
         if path.is_file():
             data = path.read_text()
             schema = json.loads(data)
-            schema_lines = data.splitlines()
-
             ref_path = "/{!s}".format(path.relative_to(input_path))
-            title = schema.get("title", "")
-            if title:
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=title.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, title))],
-                    )
-                )
-
-            desc = schema.get("description", "")
-            if desc:
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=desc.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, desc))],
-                    )
-                )
-
-            for values in schema.get("properties", {}).values():
-                title = values.get("title", None)
-                if title is not None:
-                    entries.append(
-                        dict(
-                            msgid=title.replace("\n", "</br/>"),
-                            occurrences=[(ref_path, get_line(schema_lines, title))],
-                        )
-                    )
-                description = values.get("description", "")
-                entries.append(
-                    dict(
-                        msgctxt=message_context,
-                        msgid=description.replace("\n", "</br/>"),
-                        occurrences=[(ref_path, get_line(schema_lines, description))],
-                    )
-                )
+            entries.extend(_extract_schema_strings(schema, ref_path))
 
     return entries
 
@@ -586,7 +633,7 @@ def compile_catalog(locale_dir: Path, domain: str, locale: str) -> Path:
     original po files found.
 
     Args:
-        output_dir: Catalog output director
+        locale_dir: Catalog output director
         domain: Catalog domain
         locale: locale
     Returns:
@@ -629,7 +676,7 @@ def extract_translations(
 
     Args:
         repo_root_dir: package folder to extract translation from
-        ouput_dir: output folder
+        output_dir: output folder
         project: project name
     Returns:
         Generated POT file path
