@@ -39,6 +39,13 @@
     "Editor": []
   },
   "jupyter.lab.transform": true,
+  "jupyter.lab.shortcuts": [
+    {
+      "command": "documentsearch:start",
+      "keys": ["Accel F"],
+      "selector": ".jp-mod-searchable"
+    }
+  ],
   "properties": {
     "editorConfig": {
       "title": "Editor Configuration",

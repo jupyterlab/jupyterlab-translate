@@ -365,6 +365,8 @@ def _extract_schema_strings(
             )
         elif isinstance(value, list):
             for i, element in enumerate(value):
+                if not isinstance(element, dict):
+                    continue
                 entries.extend(
                     _extract_schema_strings(
                         element,
