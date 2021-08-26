@@ -15,9 +15,11 @@ def test_extract_from_settings():
     lines = data.splitlines()
     schema = json.loads(data)
 
-    entries = _extract_schema_strings(schema, lines, "example.json")
-    strings = {entry["msgid"] for entry in entries}
-    assert strings == {
+    entries = {
+        entry["msgid"]: entry
+        for entry in _extract_schema_strings(schema, "example.json")
+    }
+    assert set(entries.keys()) == {
         "The configuration for all text editors.</br/>If `fontFamily`, `fontSize` or `lineHeight` are `null`,</br/>values from current theme are used.",
         "Text Editor Indentation",
         "Text Editor",
@@ -27,3 +29,7 @@ def test_extract_from_settings():
         "Cursor blinking rate",
         "Half-period in milliseconds used for cursor blinking. The default blink rate is 530ms. By setting this to zero, blinking can be disabled. A negative value hides the cursor entirely.",
     }
+    assert entries["Text Editor"]["occurrences"] == [("example.json", "/title")]
+    assert entries["Editor Configuration"]["occurrences"] == [
+        ("example.json", "/properties/editorConfig/title")
+    ]

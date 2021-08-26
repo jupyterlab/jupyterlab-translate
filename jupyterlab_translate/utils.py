@@ -291,27 +291,38 @@ def get_line(lines: List[str], value: str) -> str:
     return str(line_count)
 
 
-def _extract_schema_strings(
-    schema: dict, schema_lines: list, ref_path: str, prefix: str = ""
-):
-    message_context = "schema"
+_default_schema_context = "schema"
+_default_settings_context = "settings"
 
-    to_translate = [
-        "title",
-        "description",
-        "properties/.*/title",
-        "properties/.*/description",
-        "definitions/.*/properties/.*/title",
-        "definitions/.*/properties/.*/description",
-        # JupyterLab-specific
-        "jupyter.lab.setting-icon-label",
-        "jupyter.lab.menus/.*/label",
-        "jupyter.lab.toolbars/.*/label",
-    ]
-    to_translate += schema.get("jupyter.lab.internationalization", {}).get(
-        "selectors", []
-    )
-    to_translate = [re.compile("^/" + pattern + "$") for pattern in to_translate]
+# mapping of selector to translation context
+DEFAULT_SCHEMA_SELECTORS = {
+    "title": _default_schema_context,
+    "description": _default_schema_context,
+    "properties/.*/title": _default_settings_context,
+    "properties/.*/description": _default_settings_context,
+    "definitions/.*/properties/.*/title": _default_settings_context,
+    "definitions/.*/properties/.*/description": _default_settings_context,
+    # JupyterLab-specific
+    "jupyter.lab.setting-icon-label": _default_settings_context,
+    "jupyter.lab.menus/.*/label": "menu",
+    "jupyter.lab.toolbars/.*/label": "toolbar",
+}
+
+
+def _extract_schema_strings(schema: dict, ref_path: str, prefix: str = ""):
+    selectors = {
+        **DEFAULT_SCHEMA_SELECTORS,
+        **{
+            selector: _default_schema_context
+            for selector in schema.get("jupyter.lab.internationalization", {}).get(
+                "selectors", []
+            )
+        },
+    }
+    to_translate = {
+        re.compile("^/" + pattern + "$"): context
+        for pattern, context in selectors.items()
+    }
 
     entries = []
 
@@ -319,25 +330,29 @@ def _extract_schema_strings(
         path = prefix + "/" + key
 
         if isinstance(value, str):
-            if any([pattern.fullmatch(path) is not None for pattern in to_translate]):
+            matched = False
+            pattern_context = None
+            for pattern, context in to_translate.items():
+                if pattern.fullmatch(path):
+                    matched = True
+                    pattern_context = context
+                    break
+            if matched:
                 text = value.replace("\n", "</br/>")
                 entries.append(
                     dict(
-                        msgctxt=message_context,
+                        msgctxt=context,
                         msgid=text,
-                        occurrences=[(ref_path, get_line(schema_lines, value))],
+                        occurrences=[(ref_path, path)],
                     )
                 )
         elif isinstance(value, dict):
-            entries.extend(
-                _extract_schema_strings(value, schema_lines, ref_path, prefix=path)
-            )
+            entries.extend(_extract_schema_strings(value, ref_path, prefix=path))
         elif isinstance(value, list):
             for i, element in enumerate(value):
                 entries.extend(
                     _extract_schema_strings(
                         element,
-                        schema_lines,
                         ref_path,
                         prefix=path + "[" + str(i) + "]",
                     )
@@ -373,9 +388,8 @@ def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
         if path.is_file():
             data = path.read_text()
             schema = json.loads(data)
-            schema_lines = data.splitlines()
             ref_path = "/{!s}".format(path.relative_to(input_path))
-            entries.extend(_extract_schema_strings(schema, schema_lines, ref_path))
+            entries.extend(_extract_schema_strings(schema, ref_path))
 
     return entries
 
