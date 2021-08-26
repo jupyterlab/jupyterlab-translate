@@ -30,6 +30,8 @@ def test_extract_from_settings():
         "Half-period in milliseconds used for cursor blinking. The default blink rate is 530ms. By setting this to zero, blinking can be disabled. A negative value hides the cursor entirely.",
     }
     assert entries["Text Editor"]["occurrences"] == [("example.json", "/title")]
+    assert entries["Text Editor"]["msgctxt"] == "schema"
     assert entries["Editor Configuration"]["occurrences"] == [
         ("example.json", "/properties/editorConfig/title")
     ]
+    assert entries["Text Editor Indentation"]["msgctxt"] == "menu"
