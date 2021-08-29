@@ -94,6 +94,7 @@ def create_new_language_pack(
     locale: str,
     cookiecutter_url: str = COOKIECUTTER_URL,
     cookiecutter_ref: str = COOKIECUTTER_REF,
+    version: str = "0.1.post0",
 ) -> None:
     """
     Creates a new language pack python package with cookiecutter.
@@ -112,6 +113,7 @@ def create_new_language_pack(
         "locale": locale.replace("_", "-"),
         "locale_underscore": locale,
         "language": loc.english_name,
+        "version": version,
     }
     cookiecutter(
         cookiecutter_url,
