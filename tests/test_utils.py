@@ -6,50 +6,69 @@ import subprocess
 from pathlib import Path
 
 import polib
-from jupyterlab_translate.utils import create_catalog, _extract_schema_strings
-
 import pytest
+
+from jupyterlab_translate.utils import _extract_schema_strings
+from jupyterlab_translate.utils import create_catalog
 
 
 @pytest.fixture
 def dummy_pkg(tmp_path):
     pkg_name = tmp_path / "dummy_pkg"
     shutil.copytree(Path(__file__).parent / pkg_name.name, pkg_name)
-    
+
     yield pkg_name
 
 
 @pytest.fixture
 def updated_dummy_pkg(dummy_pkg):
-    patch_file = Path(__file__).parent / dummy_pkg.with_suffix('.patch').name
-    
+    patch_file = Path(__file__).parent / dummy_pkg.with_suffix(".patch").name
+
     with patch_file.open() as f:
         subprocess.check_call(["patch", "-p1"], stdin=f, cwd=dummy_pkg.parent)
-    
+
     yield dummy_pkg
 
 
 def test_create_catalog_with_merge(updated_dummy_pkg):
-    pot_file, _ = create_catalog(updated_dummy_pkg, updated_dummy_pkg / "locale", updated_dummy_pkg.name, "0.1.0", True)
+    pot_file, _ = create_catalog(
+        updated_dummy_pkg,
+        updated_dummy_pkg / "locale",
+        updated_dummy_pkg.name,
+        "0.1.0",
+        True,
+    )
     pot = polib.pofile(str(pot_file), wrapwidth=100000, check_for_duplicates=False)
-    
+
     assert len(pot) == 3
-    assert list(map(lambda p: p.msgid, pot)) == ["Fit columns width", "Insert a column at the end", "Remove the last row"]
+    assert list(map(lambda p: p.msgid, pot)) == [
+        "Fit columns width",
+        "Insert a column at the end",
+        "Remove the last row",
+    ]
 
 
 def test_create_catalog_without_merge(updated_dummy_pkg):
-    pot_file, _ = create_catalog(updated_dummy_pkg, updated_dummy_pkg / "locale", updated_dummy_pkg.name, "0.1.0", False)
+    pot_file, _ = create_catalog(
+        updated_dummy_pkg,
+        updated_dummy_pkg / "locale",
+        updated_dummy_pkg.name,
+        "0.1.0",
+        False,
+    )
     pot = polib.pofile(str(pot_file), wrapwidth=100000, check_for_duplicates=False)
-    
-    assert len(pot) == 2
-    assert list(map(lambda p: p.msgid, pot)) == ["Fit columns width", "Remove the last row"]
 
+    assert len(pot) == 2
+    assert list(map(lambda p: p.msgid, pot)) == [
+        "Fit columns width",
+        "Remove the last row",
+    ]
 
 
 def test_extract_from_settings():
     with open("tests/example.json") as f:
         data = f.read()
-        
+
     schema = json.loads(data)
 
     entries = {
