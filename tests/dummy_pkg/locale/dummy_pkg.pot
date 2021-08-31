@@ -1,0 +1,15 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: dummy_pkg 0.1.0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/documentwidget.ts:49
+msgid "Remove the last row"
+msgstr ""
+
+#: src/documentwidget.ts:62
+msgid "Insert a column at the end"
+msgstr ""

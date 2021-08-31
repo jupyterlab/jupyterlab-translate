@@ -1,0 +1,58 @@
+diff --git a/dummy_pkg/src/documentwidget.ts b/dummy_pkg/src/documentwidget.ts
+index fb8ed13..b980cdb 100644
+--- a/dummy_pkg/src/documentwidget.ts
++++ b/dummy_pkg/src/documentwidget.ts
+@@ -5,7 +5,7 @@ import { DocumentWidget } from "@jupyterlab/docregistry";
+ import { SpreadsheetWidget } from "./widget";
+ import { ToolbarButton } from "@jupyterlab/apputils";
+ import { LabIcon } from "@jupyterlab/ui-components";
+-import addRowSvg from "../style/icons/mdi-table-row-plus-after.svg";
++import fitColumnWidthSvg from "../style/icons/mdi-table-column-width.svg";
+ import removeRowSvg from "../style/icons/mdi-table-row-remove.svg";
+ import { nullTranslator, TranslationBundle } from "@jupyterlab/translation";
+ 
+@@ -17,16 +17,6 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
+     const translator = options.translator || nullTranslator;
+     this._trans = translator.load("spreadsheet-editor");
+ 
+-    const addRowButton = new ToolbarButton({
+-      icon: new LabIcon({ name: "spreadsheet:add-row", svgstr: addRowSvg }),
+-      onClick: () => {
+-        this.content.jexcel.insertRow();
+-        this.content.updateModel();
+-      },
+-      tooltip: this._trans.__("Insert a row at the end"),
+-    });
+-    this.toolbar.addItem("spreadsheet:insert-row", addRowButton);
+-
+     const removeRowButton = new ToolbarButton({
+       icon: new LabIcon({
+         name: "spreadsheet:remove-row",
+@@ -39,5 +29,27 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
+       tooltip: this._trans.__("Remove the last row"),
+     });
+     this.toolbar.addItem("spreadsheet:remove-row", removeRowButton);
++
++    const fitColumnWidthButton = new ToolbarButton({
++      icon: new LabIcon({
++        name: "spreadsheet:fit-columns",
++        svgstr: fitColumnWidthSvg,
++      }),
++      onClick: () => {
++        switch (this.content.fitMode) {
++          case "fit-cells":
++            this.content.fitMode = "all-equal-fit";
++            break;
++          case "all-equal-fit":
++            this.content.fitMode = "all-equal-default";
++            break;
++          case "all-equal-default":
++            this.content.fitMode = "fit-cells";
++        }
++        this.content.relayout();
++      },
++      tooltip: this._trans.__("Fit columns width"),
++    });
++    this.toolbar.addItem("spreadsheet:fit-columns", fitColumnWidthButton);
+   }
+ }

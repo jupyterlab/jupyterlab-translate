@@ -54,6 +54,8 @@ coverage.xml
 # Translations
 *.mo
 *.pot
+## Except test files
+!tests/**/*.pot
 
 # Django stuff:
 *.log
