@@ -573,6 +573,7 @@ def create_catalog(
     locale_dir: Union[str, Path],
     project: str,
     version: str,
+    merge: bool = True,
 ) -> Tuple[Path, Dict[str, str]]:
     """
     Create a catalog
@@ -582,18 +583,38 @@ def create_catalog(
         locale_dir: POT file folder
         project: project name
         version: version
+        merge: Merge with existing POT file
     Returns:
         Tuple (POT file path, POT metadata)
     """
     pot_path = Path(locale_dir) / f"{project}.pot"
-    nested_files = find_packages_source_files(repo_root_dir)
-    flat_files = list(chain(*nested_files.values()))
-    extract_strings(flat_files, pot_path, project, version=version)
-    append_entries = extract_tsx_strings(repo_root_dir) + extract_schema_strings(
-        repo_root_dir
-    )
-    print("\nTotal entries: {}\n".format(len(append_entries)))
-    metadata = fix_location(str(repo_root_dir), pot_path, append_entries)
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        tmp_pot = tmp_path / f"{project}.pot"
+        nested_files = find_packages_source_files(repo_root_dir)
+        flat_files = list(chain(*nested_files.values()))
+        extract_strings(flat_files, tmp_pot, project, version=version)
+        append_entries = extract_tsx_strings(repo_root_dir) + extract_schema_strings(
+            repo_root_dir
+        )
+        print("\nTotal entries: {}\n".format(len(append_entries)))
+        metadata = fix_location(str(repo_root_dir), tmp_pot, append_entries)
+
+        if merge and pot_path.exists():
+            orig = tmp_path / "orig.pot"
+            final_pot = tmp_path / "out.pot"
+            shutil.copyfile(pot_path, orig)
+
+            # Merge with existing
+            subprocess.check_call(
+                ["xgettext", str(orig), str(tmp_pot), "-s", "-o", str(final_pot)],
+                cwd=tmp,
+            )
+        else:
+            final_pot = tmp_pot
+
+        shutil.copyfile(final_pot, pot_path)
+
     return pot_path, metadata
 
 
@@ -607,7 +628,7 @@ def update_catalogs(
         pot_path: Path to `.pot` file.
         output_dir: Path to base output directory. The `.po` files will be placed in
             "{output_dir}/{locale}/LC_MESSAGES/{domain}.po".
-            Domain will be infered from the `pot_path`.
+            Domain will be inferred from the `pot_path`.
         locale: Locale
     """
     # Check if locale exists!
@@ -673,7 +694,10 @@ def compile_to_mo(po_path: Path) -> Path:
 # --- Global methods
 # ----------------------------------------------------------------------------
 def extract_translations(
-    repo_root_dir: Union[str, Path], output_dir: Union[str, Path], project: str
+    repo_root_dir: Union[str, Path],
+    output_dir: Union[str, Path],
+    project: str,
+    merge: bool = True,
 ) -> Path:
     """
     Extract translations from a package folder
@@ -692,7 +716,9 @@ def extract_translations(
     locale_dir = Path(output_dir) / LOCALE_FOLDER
     locale_dir.mkdir(parents=True, exist_ok=True)
 
-    pot_path, metadata = create_catalog(repo_root_dir, locale_dir, project, version)
+    pot_path, metadata = create_catalog(
+        repo_root_dir, locale_dir, project, version, merge
+    )
     remove_duplicates(pot_path, metadata)
 
     return pot_path

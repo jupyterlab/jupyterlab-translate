@@ -91,9 +91,15 @@ def compile_package(package_repo_dir, project, locales):
         convert_catalog_to_json(po_path, output_path, project)
 
 
-def extract_language_pack(package_repo_dir, language_packs_repo_dir, project):
+def extract_language_pack(
+    package_repo_dir, language_packs_repo_dir, project, merge: bool = True
+) -> None:
     """
-    FIXME:
+    Args:
+        package_repo_dir: Package folder to extract translation from
+        language_packs_repo_dir: Directory for POT files
+        project: project name
+        merge: Merge with existing POT file
     """
     project = normalize_project(project)
 
@@ -103,7 +109,7 @@ def extract_language_pack(package_repo_dir, language_packs_repo_dir, project):
         output_dir = os.path.join(language_packs_repo_dir, EXTENSIONS_FOLDER, project)
         os.makedirs(output_dir, exist_ok=True)
 
-    extract_translations(package_repo_dir, output_dir, project)
+    extract_translations(package_repo_dir, output_dir, project, merge)
 
 
 def update_language_pack(package_repo_dir, language_packs_repo_dir, project, locales):
