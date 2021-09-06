@@ -306,9 +306,9 @@ DEFAULT_SCHEMA_SELECTORS = {
     "definitions/.*/properties/.*/title": _default_settings_context,
     "definitions/.*/properties/.*/description": _default_settings_context,
     # JupyterLab-specific
-    "jupyter.lab.setting-icon-label": _default_settings_context,
-    "jupyter.lab.menus/.*/label": "menu",
-    "jupyter.lab.toolbars/.*/label": "toolbar",
+    "jupyter\.lab\.setting-icon-label": _default_settings_context,
+    "jupyter\.lab\.menus/.*/label": "menu",
+    "jupyter\.lab\.toolbars/.*/label": "toolbar",
 }
 
 
@@ -344,11 +344,9 @@ def _extract_schema_strings(
 
         if isinstance(value, str):
             matched = False
-            pattern_context = None
             for pattern, context in to_translate.items():
                 if pattern.fullmatch(path):
                     matched = True
-                    pattern_context = context
                     break
             if matched:
                 text = value.replace("\n", "</br/>")
@@ -390,7 +388,6 @@ def extract_schema_strings(input_path: Union[str, Path]) -> List[Dict]:
     """
     input_paths = find_source_files(Path(input_path), extensions=("package.json",))
     schema_paths: List[Path] = []
-    message_context = "schema"
 
     for path in input_paths:
         if path.is_file():
