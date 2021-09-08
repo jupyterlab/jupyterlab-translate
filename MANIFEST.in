@@ -3,6 +3,8 @@ include *.md
 include *.yaml
 include .bumpversion.cfg
 include jupyterlab_translate/index.js
+include package.json
+include yarn.lock
 
 recursive-include tests *.py
 recursive-include tests *.json
