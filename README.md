@@ -9,7 +9,7 @@
 
 This package is used to generate [language packs](https://github.com/jupyterlab/language-packs) for the JupyterLab ecosystem.
 
-This pacakge performs the following tasks common on JupyterLab core and external extensions:
+This package performs the following tasks common on JupyterLab core and external extensions:
 
 * Extract strings from code in `*.py`, `*.ts`, `*.tsx` files.
 * Extract strings from JSON schema files.
@@ -49,3 +49,15 @@ jupyterlab-translate extract <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
 jupyterlab-translate update <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME> -l es-ES
 jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
 ```
+
+## Development
+
+### Typescript extractor
+
+To extract translatable strings from typescript files, this package relies on
+[`gettext-extract`](https://github.com/sinedied/gettext-extract). To ease its
+installation and usage, that tool is packaged within the python package by
+creating a monolithic JavaScript file using [`@vercel/ncc`](https://github.com/vercel/ncc)
+_compiler_.
+
+To update the monolithic file, have a look at the [release file](./RELEASE.md).

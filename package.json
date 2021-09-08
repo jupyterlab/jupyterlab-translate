@@ -1,0 +1,20 @@
+{
+  "name": "@jupyterlab/translate",
+  "version": "1.0.0",
+  "description": "JupyterLab Language Pack Translations Helper",
+  "repository": "https://github.com/jupyterlab/jupyterlab-translate.git",
+  "author": "Project Jupyter Contributors",
+  "license": "BSD-3-Clause",
+  "private": true,
+  "scripts": {
+    "build": "ncc build node_modules/gettext-extract/bin/gettext-extract -o jupyterlab_translate --minify && yarn run clean:typescript",
+    "clean": "rimraf jupyterlab_translate/index.js",
+    "clean:all": "yarn run clean && rimraf yarn.lock node_modules",
+    "clean:typescript": "rimraf jupyterlab_translate/typescript"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.30.0",
+    "gettext-extract": "^2.0.1",
+    "rimraf": "^3.0.2"
+  }
+}

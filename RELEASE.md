@@ -2,13 +2,12 @@
 
 ## Update gettext.js
 
+You will need to install `yarn`.
+
 ```bash
-rm package-lock.json
-rm -rf node_modules/
-npm install gettext-extract
-npm install @vercel/ncc -g
-ncc build node_modules/gettext-extract/bin/gettext-extract -o jupyterlab_translate --minify
-rm -rf jupyterlab_translate/typescript
+yarn run clean:all
+yarn install
+yarn run build
 ```
 
 ## Make release
