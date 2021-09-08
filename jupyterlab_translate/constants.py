@@ -48,7 +48,9 @@ GETTEXT_CONFIG = {
         "parsers": __build_parsers(),
         "glob": {
             "pattern": "**/*.ts*(x)",
-            "options": {"ignore": "{examples/**/*.ts*(x),**/*.spec.ts}"},
+            "options": {
+                "ignore": "{examples/**/*.ts*(x),**/*.spec.ts,node_modules/**/*.ts*(x)}"
+            },
         },
         "comments": {"otherLineLeading": True},
     },
