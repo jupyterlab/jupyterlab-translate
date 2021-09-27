@@ -349,11 +349,10 @@ def _extract_schema_strings(
                     matched = True
                     break
             if matched:
-                text = value.replace("\n", "</br/>")
                 entries.append(
                     dict(
                         msgctxt=context,
-                        msgid=text,
+                        msgid=value,
                         occurrences=[(ref_path, path)],
                     )
                 )
@@ -560,7 +559,7 @@ def remove_duplicates(pot_path: Path, metadata: Dict[str, str]) -> None:
 
     po.save(str(pot_path))
 
-    pot_path.write_text(pot_path.read_text().replace(r"</br/>", r"\n"))
+    pot_path.write_text(pot_path.read_text())
 
     old_pot_name.unlink()
 
