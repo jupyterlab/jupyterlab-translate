@@ -76,7 +76,7 @@ def test_extract_from_settings():
         for entry in _extract_schema_strings(schema, "example.json")
     }
     assert set(entries.keys()) == {
-        "The configuration for all text editors.</br/>If `fontFamily`, `fontSize` or `lineHeight` are `null`,</br/>values from current theme are used.",
+        "The configuration for all text editors.\nIf `fontFamily`, `fontSize` or `lineHeight` are `null`,\nvalues from current theme are used.",
         "Text Editor Indentation",
         "Text Editor",
         "Editor",
