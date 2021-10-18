@@ -20,7 +20,7 @@ TRANSLATIONS_FOLDER = "translations"
 
 def __build_parsers() -> List[dict]:
 
-    roots = {"trans", "this._trans", "this.props.trans", "props.trans"}
+    roots = {"trans", "this.trans", "this._trans", "this.props.trans", "props.trans"}
     functions = [
         {"expression": "__", "arguments": {"text": 0}},
         {"expression": "gettext", "arguments": {"text": 0}},
