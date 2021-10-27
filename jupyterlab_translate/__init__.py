@@ -3,4 +3,4 @@
 from .finder import get_installed_language_packs
 from .finder import get_language_pack
 
-__version__ = "1.0.3"
+__version__ = "1.0.4-dev0"
