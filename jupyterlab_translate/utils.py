@@ -735,18 +735,18 @@ def update_translations(repo_root_dir, output_dir, project, locales=None):
     locales: sequence
         FIXME:
     """
-    raise NotImplementedError("update_translations not implemented")
-    # # Find locales, if not there, error?
-    # locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
-    # if locales is None:
-    #     locales = find_locales(output_dir)
+    # Find locales, if not there, error?
+    locale_dir = output_dir / LOCALE_FOLDER
+    if locales is None:
+        locales = find_locales(output_dir)
 
-    # # Load version from setup.py
-    # version = get_version(repo_root_dir, project)
+    # Load version from setup.py
+    version = get_version(repo_root_dir, project)
 
-    # # Extract pot file
-    # os.makedirs(locale_dir, exist_ok=True)
-    # pot_path = create_catalog(repo_root_dir, locale_dir, project, version)
+    # Extract pot file
+    locale_dir.mkdir(parents=True, exist_ok=True)
+    pot_path, metadata = create_catalog(repo_root_dir, locale_dir, project, version)
+    remove_duplicates(pot_path, metadata)
 
     # Create or update po files
     for locale in locales:
