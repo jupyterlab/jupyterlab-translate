@@ -51,11 +51,20 @@ def normalize_project(project: str) -> str:
     return project.lower().replace("-", "_")
 
 
-def extract_package(package_repo_dir, project):
+def extract_package(package_repo_dir, project, merge: bool = True):
     """
     FIXME:
     """
-    raise NotImplementedError("extract_package")
+
+    project = normalize_project(project)
+    output_dir = package_repo_dir / project
+
+    if not os.path.isdir(output_dir):
+        raise Exception(
+            "Output dir `{output_dir}` not found!".format(output_dir=output_dir)
+        )
+
+    extract_translations(package_repo_dir, output_dir, project, merge)
 
 
 def update_package(package_repo_dir, project, locales):
@@ -66,7 +75,7 @@ def update_package(package_repo_dir, project, locales):
         check_locales(locales)
 
     project = normalize_project(project)
-    output_dir = os.path.join(package_repo_dir, project)
+    output_dir = package_repo_dir / project
 
     if not os.path.isdir(output_dir):
         raise Exception(
@@ -84,11 +93,12 @@ def compile_package(package_repo_dir, project, locales):
         check_locales(locales)
 
     project = normalize_project(project)
-    output_dir = os.path.join(package_repo_dir, project)
+    output_dir = package_repo_dir / project
     po_paths = compile_translations(output_dir, project, locales)
-    for __, po_path in po_paths.items():
-        output_path = os.path.dirname(po_path)
+    for _, po_path in po_paths.items():
+        output_path = po_path.parent
         convert_catalog_to_json(po_path, output_path, project)
+        compile_to_mo(po_path)
 
 
 def extract_language_pack(

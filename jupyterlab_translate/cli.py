@@ -3,6 +3,8 @@
 """
 Command line interface.
 """
+from pathlib import Path
+
 import click
 
 from .api import compile_language_pack
@@ -17,7 +19,9 @@ from .api import update_package
 lang_packs_repo_dir_arg = click.argument(
     "language_packs_repo_dir", type=click.Path(exists=True)
 )
-package_repo_dir_arg = click.argument("package_repo_dir", type=click.Path(exists=True))
+package_repo_dir_arg = click.argument(
+    "package_repo_dir", type=click.Path(exists=True, path_type=Path)
+)
 project_arg = click.argument("project")
 
 

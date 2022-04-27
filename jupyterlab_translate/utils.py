@@ -616,7 +616,7 @@ def create_catalog(
 
 def update_catalogs(
     pot_path: Union[str, Path], output_dir: Union[str, Path], locale: str
-):
+) -> Path:
     """
     Create new locale `.po` files or update and merge if they already exist.
 
@@ -632,7 +632,7 @@ def update_catalogs(
         return
 
     domain = Path(pot_path).stem
-    po_path = f"{output_dir!s}/{locale}/LC_MESSAGES/{domain}.po"
+    po_path = output_dir / locale / "LC_MESSAGES" / f"{domain}.po"
 
     command = "update" if os.path.isfile(po_path) else "init"
 
@@ -646,6 +646,7 @@ def update_catalogs(
     ]
 
     subprocess.check_call(cmd)
+    return po_path
 
 
 def compile_catalog(locale_dir: Path, domain: str, locale: str) -> Path:
@@ -735,22 +736,23 @@ def update_translations(repo_root_dir, output_dir, project, locales=None):
     locales: sequence
         FIXME:
     """
-    raise NotImplementedError("update_translations not implemented")
-    # # Find locales, if not there, error?
-    # locale_dir = os.path.join(output_dir, LOCALE_FOLDER)
-    # if locales is None:
-    #     locales = find_locales(output_dir)
+    # Find locales, if not there, error?
+    locale_dir = output_dir / LOCALE_FOLDER
+    if locales is None:
+        locales = find_locales(output_dir)
 
-    # # Load version from setup.py
-    # version = get_version(repo_root_dir, project)
+    # Load version from setup.py
+    version = get_version(repo_root_dir, project)
 
-    # # Extract pot file
-    # os.makedirs(locale_dir, exist_ok=True)
-    # pot_path = create_catalog(repo_root_dir, locale_dir, project, version)
+    # Extract pot file
+    locale_dir.mkdir(parents=True, exist_ok=True)
+    pot_path, metadata = create_catalog(repo_root_dir, locale_dir, project, version)
+    remove_duplicates(pot_path, metadata)
 
     # Create or update po files
     for locale in locales:
-        update_catalogs(pot_path, locale_dir, locale)
+        po_path = update_catalogs(pot_path, locale_dir, locale)
+        update_version(po_path, project, version)
 
 
 def compile_translations(
@@ -775,3 +777,16 @@ def compile_translations(
         po_paths[locale] = compile_catalog(locale_dir, project, locale)
 
     return po_paths
+
+
+def update_version(
+    po_path: Union[str, Path],
+    project: str,
+    version: str,
+) -> Path:
+    po_path_str = str(po_path)
+    po = polib.pofile(po_path_str, wrapwidth=76)
+    po.metadata["Project-Id-Version"] = f"{project} {version}"
+    po.save(po_path_str)
+
+    return po_path
