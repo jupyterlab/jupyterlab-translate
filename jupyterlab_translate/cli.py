@@ -71,7 +71,9 @@ def update(package_repo_dir, project, locales):
     update_package(package_repo_dir, project, locales)
 
 
-@main.command(help=("Update contributors list for a language package from Crowdin report."))
+@main.command(
+    help=("Update contributors list for a language package from Crowdin report.")
+)
 @package_repo_dir_arg
 def update_contributors(package_repo_dir):
 
