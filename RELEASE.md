@@ -23,7 +23,8 @@ check-manifest -v
 
 ```bash
 hatch version <new_version>
-git commit -m "Bump verison"
+git add jupyterlab_translate/__init__.py
+git commit -m "Bump version"
 git tag <new_tag>
 ```
 
