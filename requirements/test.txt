@@ -1,4 +1,0 @@
-check-manifest
-pre-commit
-pytest
-pytest-cov

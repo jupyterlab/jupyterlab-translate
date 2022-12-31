@@ -4,7 +4,6 @@
 API interface.
 """
 import os
-import shutil
 from pathlib import Path
 from typing import List
 from typing import Union
@@ -140,6 +139,21 @@ def update_language_pack(package_repo_dir, language_packs_repo_dir, project, loc
         os.makedirs(output_dir, exist_ok=True)
 
     update_translations(package_repo_dir, output_dir, project, locales)
+
+
+def compile_po_file(po_path: Path) -> None:
+    """Compile .PO files to .MO and .JSON files inplace."""
+    output_path = po_path.parent
+
+    target_json = po_path.with_suffix(".json")
+    if target_json.exists():
+        target_json.unlink()
+    convert_catalog_to_json(po_path, output_path, po_path.stem)
+
+    target_mo = po_path.with_suffix(".mo")
+    if target_mo.exists():
+        target_mo.unlink()
+    compile_to_mo(po_path)
 
 
 def compile_language_pack(

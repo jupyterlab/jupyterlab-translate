@@ -12,18 +12,18 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: '3.10'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade -r requirements/release.txt
+        python -m pip install --upgrade check-manifest twine build
     - name: Build release
       run: |
         check-manifest -v
-        python setup.py sdist bdist_wheel
+        python -m build
         python -m twine check dist/*
     - name: Create Release
       id: create_release
@@ -42,4 +42,3 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
         python -m twine upload dist/*
-        ls
