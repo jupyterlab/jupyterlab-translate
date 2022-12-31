@@ -14,6 +14,9 @@ import requests
 from crowdin_api import CrowdinClient
 
 
+CONTRIBUTORS = "CONTRIBUTORS.md"
+
+
 class FirstCrowdinClient(CrowdinClient):
     TOKEN = os.environ.get("CROWDIN_API_KEY")
     PAGE_SIZE = 100000  # Optional, sets default page size

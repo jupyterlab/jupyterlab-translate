@@ -35,6 +35,7 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "check-manifest",
+    "hatch",
     "pre-commit",
     "pytest",
     "pytest-cov",

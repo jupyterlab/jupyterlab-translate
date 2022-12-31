@@ -9,12 +9,12 @@ import polib
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
 from jupyterlab_translate.api import compile_po_file
+from jupyterlab_translate.contributors import CONTRIBUTORS
 from jupyterlab_translate.contributors import get_contributors_report
 
 
 # Minimal percentage needed to compile a PO file
 COMPILATION_THRESHOLD = 0
-CONTRIBUTORS = "CONTRIBUTORS.md"
 
 
 class JupyterLanguageBuildHook(BuildHookInterface):
@@ -52,10 +52,6 @@ class JupyterLanguageBuildHook(BuildHookInterface):
         Any modifications to the build data will be seen by the build target.
         """
 
-        if self.target_name not in ["wheel"]:
-            self.app.display_info(f"Ignoring target name {self.target_name}")
-            return
-
         package_folder = Path(self.root)
         python_folder = next(
             package_folder.glob("jupyterlab_language_pack_??_??"), None
@@ -68,30 +64,27 @@ class JupyterLanguageBuildHook(BuildHookInterface):
         else:
             locale_name = python_folder.name[-5:]
 
-        messages_folder = python_folder / "locale" / locale_name / "LC_MESSAGES"
+        if self.target_name == "wheel":
+            messages_folder = python_folder / "locale" / locale_name / "LC_MESSAGES"
 
-        po_files = list(filter(lambda f: f.is_file(), messages_folder.glob("*.po")))
+            po_files = list(filter(lambda f: f.is_file(), messages_folder.glob("*.po")))
+            for file in po_files:
+                po = polib.pofile(str(file))
+                percent_translated = po.percent_translated()
 
-        # Check if PO files have been changed
-        any_compiled = False
+                if percent_translated >= COMPILATION_THRESHOLD:
+                    self.app.display_info(
+                        f"{locale_name} {file.stem} {percent_translated}% compiling...",
+                    )
+                    compile_po_file(file)
+                else:
+                    self.app.display_info(
+                        f"{locale_name} {file.stem} {percent_translated}% < {COMPILATION_THRESHOLD}%",
+                    )
 
-        for file in po_files:
-            po = polib.pofile(str(file))
-            percent_translated = po.percent_translated()
-
-            if percent_translated >= COMPILATION_THRESHOLD:
-                self.app.display_info(
-                    f"{locale_name} {file.stem} {percent_translated}% compiling...",
-                )
-                compile_po_file(file)
-                any_compiled = True
-            else:
-                self.app.display_info(
-                    f"{locale_name} {file.stem} {percent_translated}% < {COMPILATION_THRESHOLD}%",
-                )
-
-        CROWDIN_API_KEY = os.environ.get("CROWDIN_API_KEY")
-        if any_compiled:
+            self.app.display_success("Language translation bundles generated.")
+        else:
+            CROWDIN_API_KEY = os.environ.get("CROWDIN_API_KEY")
             if CROWDIN_API_KEY is None:
                 self.app.display_warning(
                     "Unable to update the contributors list as 'CROWDIN_API_KEY' env variable is not provided"
@@ -99,9 +92,9 @@ class JupyterLanguageBuildHook(BuildHookInterface):
             else:
                 # Update the contributors file
                 contributors = package_folder / CONTRIBUTORS
-                contributors.write_text(
-                    get_contributors_report(
-                        locale=locale_name, crowdin_key=CROWDIN_API_KEY
-                    )
+                content = get_contributors_report(
+                    locale=locale_name.replace("_", "-"), crowdin_key=CROWDIN_API_KEY
                 )
-        self.app.display_success("Language translation bundles generated.")
+                contributors.write_text(content)
+
+                self.app.display_success("Contributors list updated.")

@@ -27,6 +27,14 @@ homepage = "https://github.com/jupyterlab/language-packs"
 [tool.hatch.version]
 path = "jupyterlab_language_pack_ko_KR/__init__.py"
 
+[tool.hatch.build]
+artifacts = [
+    "CONTRIBUTORS.md"
+]
+
+[tool.hatch.build.hooks.jupyter-translate]
+dependencies = ["jupyterlab-translate@{REPO_ROOT}"]
+
 [tool.hatch.build.targets.wheel]
 artifacts = [
     "jupyterlab_language_pack_ko_KR/**/*.json",
@@ -35,16 +43,13 @@ artifacts = [
 exclude = [
     "jupyterlab_language_pack_ko_KR/**/*.po",
 ]
-
-[tool.hatch.build.targets.wheel.hooks.jupyter-translate]
-dependencies = ["jupyterlab-translate@{REPO_ROOT}"]
 """
 
 
 @pytest.fixture
 def language_package(tmp_path):
-    pyproject = tmp_path / "pyproject.toml"
-    pyproject.write_text(TOML_CONTENT)
+    (tmp_path / "pyproject.toml").write_text(TOML_CONTENT)
+    (tmp_path / "CONTRIBUTORS.md").write_text("# Contributors\n")
 
     pkg = tmp_path / "jupyterlab_language_pack_ko_KR"
     pkg.mkdir()
@@ -146,6 +151,7 @@ def test_hatch_build(language_package):
         "r:gz",
     ) as sdist:
         assert sdist.getnames() == [
+            "jupyterlab_language_pack_ko_kr-1.0.post2/CONTRIBUTORS.md",
             "jupyterlab_language_pack_ko_kr-1.0.post2/jupyterlab_language_pack_ko_KR/__init__.py",
             "jupyterlab_language_pack_ko_kr-1.0.post2/jupyterlab_language_pack_ko_KR/locale/ko_KR/LC_MESSAGES/jupyterlab.po",
             "jupyterlab_language_pack_ko_kr-1.0.post2/jupyterlab_language_pack_ko_KR/locale/ko_KR/LC_MESSAGES/spellchecker.po",

@@ -3,6 +3,8 @@
 """
 Command line interface.
 """
+import os
+import sys
 from pathlib import Path
 
 import click
@@ -13,6 +15,8 @@ from .api import extract_language_pack
 from .api import extract_package
 from .api import update_language_pack
 from .api import update_package
+from .contributors import CONTRIBUTORS
+from .contributors import get_contributors_report
 
 # --- Common arguments
 # ----------------------------------------------------------------------------
@@ -65,6 +69,35 @@ def extract(package_repo_dir, project):
 def update(package_repo_dir, project, locales):
     click.echo("Updating for stand alone package")
     update_package(package_repo_dir, project, locales)
+
+
+@main.command(help=("Update contributors list for a language package from Crowdin report."))
+@package_repo_dir_arg
+def update_contributors(package_repo_dir):
+
+    CROWDIN_API_KEY = os.environ.get("CROWDIN_API_KEY")
+
+    if CROWDIN_API_KEY is None:
+        click.echo(
+            "Unable to update the contributors list as 'CROWDIN_API_KEY' env variable is not provided"
+        )
+        sys.exit(1)
+    else:
+        click.echo("Updating the contributors list.")
+        package_folder = Path(package_repo_dir)
+        python_folder = next(
+            package_folder.glob("jupyterlab_language_pack_??_??"), None
+        )
+        if python_folder is None:
+            click.echo(f"Unable to get the Python folder name in {package_folder!s}")
+            sys.exit(1)
+        else:
+            locale_name = python_folder.name[-5:]
+        contributors = package_repo_dir / CONTRIBUTORS
+        content = get_contributors_report(
+            locale=locale_name.replace("_", "-"), crowdin_key=CROWDIN_API_KEY
+        )
+        contributors.write_text(content)
 
 
 @main.command(help=("Compile catalogs for a Jupyterlab extension."))
