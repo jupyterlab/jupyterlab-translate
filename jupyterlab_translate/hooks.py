@@ -4,6 +4,7 @@ from hatchling.plugin import hookimpl
 
 from jupyterlab_translate.plugin import JupyterLanguageBuildHook
 
+
 @hookimpl
 def hatch_register_build_hook():
     return JupyterLanguageBuildHook

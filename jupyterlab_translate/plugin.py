@@ -20,7 +20,7 @@ CONTRIBUTORS = "CONTRIBUTORS.md"
 class JupyterLanguageBuildHook(BuildHookInterface):
     """Hatch build plugin to package Jupyter language pack."""
 
-    PLUGIN_NAME = "jupyter-language"
+    PLUGIN_NAME = "jupyter-translate"
 
     def clean(self, versions: list[str]) -> None:
         """This occurs before the build process if the -c/--clean flag was
@@ -92,13 +92,11 @@ class JupyterLanguageBuildHook(BuildHookInterface):
 
         CROWDIN_API_KEY = os.environ.get("CROWDIN_API_KEY")
         if any_compiled:
-            if CROWDIN_API_KEY is not None:
+            if CROWDIN_API_KEY is None:
                 self.app.display_warning(
                     "Unable to update the contributors list as 'CROWDIN_API_KEY' env variable is not provided"
                 )
             else:
-                # Update the hash value
-                self.save_hash(self.create_hash(*po_files))
                 # Update the contributors file
                 contributors = package_folder / CONTRIBUTORS
                 contributors.write_text(
