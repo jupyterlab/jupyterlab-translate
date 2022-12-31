@@ -22,8 +22,9 @@ check-manifest -v
 * Bump versions
 
 ```bash
-bump2version release --tag
-bump2version patch
+hatch version <new_version>
+git commit -m "Bump verison"
+git tag <new_tag>
 ```
 
 * Push commits and tags and CI will build and publish the package.
