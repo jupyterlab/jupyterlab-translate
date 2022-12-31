@@ -2,8 +2,13 @@
 # Distributed under the terms of the Modified BSD License.
 import json
 import os
+import sys
 
-import pkg_resources
+# See compatibility note on `group` keyword in https://docs.python.org/3/library/importlib.metadata.html#entry-points
+if sys.version_info < (3, 10):
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 from .utils import check_locale
 
@@ -34,7 +39,8 @@ def get_installed_packages_locale(locale: str) -> dict:
     - `entry_points={"jupyterlab.locale": "jupyterlab-git = jupyterlab_git"}`
     """
     packages_locale_data = {}
-    for entry_point in pkg_resources.iter_entry_points(JUPYTERLAB_LOCALE_ENTRY):
+
+    for entry_point in entry_points(group=JUPYTERLAB_LOCALE_ENTRY):
         name = entry_point.name.replace("-", "_").lower()
         locales = []
         try:
@@ -71,9 +77,7 @@ def get_installed_language_packs() -> list:
     """
     return [
         entry_point.name
-        for entry_point in pkg_resources.iter_entry_points(
-            JUPYTERLAB_LANGUAGEPACK_ENTRY
-        )
+        for entry_point in entry_points(group=JUPYTERLAB_LANGUAGEPACK_ENTRY)
     ]
 
 
@@ -87,9 +91,7 @@ def get_language_pack(locale: str) -> dict:
         Dictionary with language pack information in Jed format.
     """
     if check_locale(locale):
-        for entry_point in pkg_resources.iter_entry_points(
-            JUPYTERLAB_LANGUAGEPACK_ENTRY
-        ):
+        for entry_point in entry_points(group=JUPYTERLAB_LANGUAGEPACK_ENTRY):
             if locale == entry_point.name:
                 return entry_point.load()
         else:

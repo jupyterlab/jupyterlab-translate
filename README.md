@@ -16,7 +16,9 @@ This package performs the following tasks common on JupyterLab core and external
 * Create gettext `*.pot` catalogs.
 * Removes duplicate strings from catalogs.
 * Create gettext `*.po` catalogs for specific languages.
-* Compile catalogs to `*.mo` and `*.json` format to be consumed by the JupyterLab frontent.
+* Compile catalogs to `*.mo` and `*.json` format to be consumed by the JupyterLab frontend.
+* Provide a [Hatch Build Hook](https://hatch.pypa.io/latest/plugins/build-hook/reference/) to compile catalogs when building wheels.
+* Update the list of contributors from Crowdin project.
 
 ## Installation
 
