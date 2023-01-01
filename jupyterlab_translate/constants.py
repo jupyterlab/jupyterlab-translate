@@ -8,8 +8,8 @@ from itertools import chain
 from typing import List
 
 
-COOKIECUTTER_URL = "https://github.com/goanpeca/jupyterlab-language-pack-cookiecutter"
-COOKIECUTTER_REF = "master"
+TEMPLATE_URL = "https://github.com/goanpeca/jupyterlab-language-pack-cookiecutter"
+TEMPLATE_REF = "master"
 EXTENSIONS_FOLDER = "extensions"
 JUPYTERLAB = "jupyterlab"
 LANG_PACKS_FOLDER = "language-packs"

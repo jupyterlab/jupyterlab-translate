@@ -21,14 +21,14 @@ from typing import Tuple
 from typing import Union
 
 import babel
+import copier
 import polib
-from cookiecutter.main import cookiecutter
 
-from .constants import COOKIECUTTER_REF
-from .constants import COOKIECUTTER_URL
 from .constants import GETTEXT_CONFIG
 from .constants import LC_MESSAGES
 from .constants import LOCALE_FOLDER
+from .constants import TEMPLATE_REF
+from .constants import TEMPLATE_URL
 
 # Constants
 HERE = Path(__file__).parent
@@ -51,13 +51,13 @@ def get_version(repo_root_path: Path, project: str) -> str:
     version = ""
     # Look for python version
     try:
-        output = (
-            subprocess.check_output(
-                [sys.executable, "setup.py", "--version"], cwd=repo_root_path
-            )
-            .decode("utf8")
-            .strip()
-        )
+        output = subprocess.check_output(
+            [sys.executable, "setup.py", "--version"]
+            if (repo_root_path / "setup.py").exists()
+            else [sys.executable, "-m", "hatch", "version"],
+            cwd=repo_root_path,
+            encoding="utf-8",
+        ).strip()
     except subprocess.CalledProcessError as e:
         print(f"Failed to get the Python package version for '{package!s}.")
         print(e)
@@ -92,40 +92,41 @@ def get_version(repo_root_path: Path, project: str) -> str:
 def create_new_language_pack(
     output_dir: Union[str, Path],
     locale: str,
-    cookiecutter_url: str = COOKIECUTTER_URL,
-    cookiecutter_ref: str = COOKIECUTTER_REF,
+    template_url: str = TEMPLATE_URL,
+    template_ref: str = TEMPLATE_REF,
     version: str = "0.1.post0",
 ) -> None:
     """
-    Creates a new language pack python package with cookiecutter.
+    Creates a new language pack python package from the package template.
 
     Args:
-        output_dir: Ouput directory for the language pack
+        output_dir: Output directory for the language pack
         locale: Locale
-        cookiecutter_url: Language pack template
-        cookiecutter_ref: Template git reference
+        template_url: Language pack template
+        template_ref: Template git reference
     """
     if not check_locale(locale):
         raise Exception("Invalid locale!")
 
-    loc = babel.Locale.parse(locale)
-    options = {
-        "locale": locale.replace("_", "-"),
-        "locale_underscore": locale,
-        "language": loc.english_name,
-        "version": version,
-    }
-    cookiecutter(
-        cookiecutter_url,
-        checkout=cookiecutter_ref,
-        extra_context=options,
-        no_input=True,
-        output_dir=str(output_dir),
+    loc = babel.Locale.parse("nb_NO" if locale == "no_NO" else locale)
+
+    locale_dash = locale.replace("_", "-")
+    pkg_dir = Path(output_dir) / f"jupyterlab-language-pack-{locale_dash}"
+    pkg_dir.mkdir(parents=True, exist_ok=True)
+    copier.run_auto(
+        template_url,
+        pkg_dir,
+        data={"locale": locale_dash, "language": loc.english_name, "version": version},
+        vcs_ref=template_ref,
     )
 
 
 def check_locale(locale: str) -> bool:
     """Check if a locale is a valid value."""
+    # Add exception for no_NO
+    if locale == "no_NO":
+        return True
+
     value = False
     try:
         babel.Locale.parse(locale)
