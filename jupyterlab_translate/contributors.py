@@ -121,7 +121,7 @@ def format_data(data: dict, language: str = None):
     Returns
     -------
     str
-        Formated crowdin contributor data.
+        Formatted crowdin contributor data.
     """
     new_lines = ["# Contributors", ""]
     lines = [line for line in data.split("\n")[1:] if line]
@@ -175,21 +175,21 @@ def get_contributors_report(
     """
     Get the translators report per word for a given locale language.
 
-    Crowdin key needs either to be provided or to be set through CROWDIN_API environment variable.
+    Crowdin key needs either to be provided or to be set through CROWDIN_API_KEY environment variable.
 
     Parameters
     ----------
     project_id : int
         Crowding project identifier.
     locale : str, optional
-        Loale string. Default is `None`.
+        Locale string. Default is `None`.
     crowding_key: str, optional
         Crowdin API key
 
     Returns
     -------
     str
-        The formated string for the contributors file.
+        The formatted string for the contributors file.
     """
     if crowdin_key is not None:
         old_token = client.TOKEN

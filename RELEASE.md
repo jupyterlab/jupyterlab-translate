@@ -16,7 +16,6 @@ yarn run build
 
 ```bash
 pre-commit run -a
-check-manifest -v
 ```
 
 * Bump versions
