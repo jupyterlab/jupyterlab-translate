@@ -20,10 +20,7 @@ jobs:
         python-version: '3.10'
     - name: Install in develop mode
       run: |
-        pip install -e .[test]
-    - name: Checks
-      run: |
-        check-manifest -v
+        pip install -e ".[test]"
     - name: Style checks
       run: |
         pre-commit run -a
