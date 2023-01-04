@@ -8,7 +8,7 @@ from itertools import chain
 from typing import List
 
 
-TEMPLATE_URL = "https://github.com/goanpeca/jupyterlab-language-pack-cookiecutter"
+TEMPLATE_URL = "https://github.com/jupyterlab/jupyterlab-language-pack-cookiecutter"
 TEMPLATE_REF = "master"
 EXTENSIONS_FOLDER = "extensions"
 JUPYTERLAB = "jupyterlab"
