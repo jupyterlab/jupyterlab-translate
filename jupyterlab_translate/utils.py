@@ -309,7 +309,9 @@ DEFAULT_SCHEMA_SELECTORS = {
     # JupyterLab-specific
     "jupyter\.lab\.setting-icon-label": _default_settings_context,
     "jupyter\.lab\.menus/.*/label": "menu",
+    "jupyter\.lab\.metadataforms/.*/label": "metadataforms",
     "jupyter\.lab\.toolbars/.*/label": "toolbar",
+    "jupyter\.lab\.toolbars/.*/caption": "toolbar",
 }
 
 
