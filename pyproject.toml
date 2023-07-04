@@ -31,6 +31,7 @@ dependencies = [
     "hatchling>=1.5",
     "jinja2-time",
     "polib",
+    "pydantic<2.0.0",
     "requests"
 ]
 
