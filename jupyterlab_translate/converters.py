@@ -1,6 +1,6 @@
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
-import ast
+
 import json
 from pathlib import Path
 
@@ -51,11 +51,18 @@ def convert_catalog_to_json(po_path: Path, output_dir: Path, project: str) -> Pa
         else:
             key = entry.msgid
 
-        if entry.msgstr:
+        if entry.msgstr:  # will skip if no translation is available
             result[key] = [entry.msgstr]
-        elif entry.msgstr_plural:
-            plural = [v for _, v in sorted(entry.msgstr_plural.items())]
-            result[key] = plural
+        elif entry.msgid_plural and entry.msgstr_plural:
+            plural = [v for _, v in sorted(entry.msgstr_plural.items()) if v]
+            # If any plural form is not empty
+            if any(plural):
+                result[key] = plural
+                if len(plural) == 1:
+                    # We need to add a dummy element as JupyterLab checks
+                    # there are multiple plural strings for the value to be valid
+                    # But some languages don't have plural form.
+                    plural.append("")
 
     json_path.write_text(json.dumps(result, sort_keys=True, indent=4))
 
