@@ -40,11 +40,12 @@ def test_create_catalog_with_merge(updated_dummy_pkg):
     )
     pot = polib.pofile(str(pot_file), wrapwidth=100000, check_for_duplicates=False)
 
-    assert len(pot) == 3
+    assert len(pot) == 4
     assert list(map(lambda p: p.msgid, pot)) == [
         "Fit columns width",
         "Insert a column at the end",
         "Remove the last row",
+        "singular",
     ]
 
 
@@ -58,10 +59,11 @@ def test_create_catalog_without_merge(updated_dummy_pkg):
     )
     pot = polib.pofile(str(pot_file), wrapwidth=100000, check_for_duplicates=False)
 
-    assert len(pot) == 2
+    assert len(pot) == 3
     assert list(map(lambda p: p.msgid, pot)) == [
         "Fit columns width",
         "Remove the last row",
+        "singular",
     ]
 
 

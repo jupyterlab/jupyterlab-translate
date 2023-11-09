@@ -94,6 +94,10 @@ msgid "The font family used to render markdown.\\n"
 msgstr "마크다운을 표시할 때 사용하는 글꼴.\\n"
 "값이 `null`이면 현재 테마의 해당 값이 사용됩니다."
 
+#: packages/notebook-extension/src/index.ts:2505
+msgid "Cut Cell"
+msgid_plural "Cut Cells"
+msgstr[0] "셀 잘라내기"
 """
     )
     (messages / "spellchecker.po").write_text(
@@ -198,5 +202,9 @@ def test_hatch_build(language_package):
     ],
     "settings\u0004The font family used to render markdown.\nIf `null`, value from current theme is used.": [
         "\ub9c8\ud06c\ub2e4\uc6b4\uc744 \ud45c\uc2dc\ud560 \ub54c \uc0ac\uc6a9\ud558\ub294 \uae00\uaf34.\n\uac12\uc774 `null`\uc774\uba74 \ud604\uc7ac \ud14c\ub9c8\uc758 \ud574\ub2f9 \uac12\uc774 \uc0ac\uc6a9\ub429\ub2c8\ub2e4."
+    ],
+    "Cut Cell": [
+        "\uc140\u0020\uc798\ub77c\ub0b4\uae30",
+        ""
     ]
 }"""
