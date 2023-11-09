@@ -16,6 +16,7 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
     super(options);
     const translator = options.translator || nullTranslator;
     this._trans = translator.load("spreadsheet-editor");
+    const a = this._trans._n("singular", "plural");
 
     const addRowButton = new ToolbarButton({
       icon: new LabIcon({ name: "spreadsheet:add-row", svgstr: addRowSvg }),

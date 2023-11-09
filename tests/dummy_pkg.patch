@@ -11,9 +11,9 @@ index fb8ed13..b980cdb 100644
  import removeRowSvg from "../style/icons/mdi-table-row-remove.svg";
  import { nullTranslator, TranslationBundle } from "@jupyterlab/translation";
  
-@@ -17,16 +17,6 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
-     const translator = options.translator || nullTranslator;
+@@ -18,16 +18,6 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
      this._trans = translator.load("spreadsheet-editor");
+     const a = this._trans._n("singular", "plural");
  
 -    const addRowButton = new ToolbarButton({
 -      icon: new LabIcon({ name: "spreadsheet:add-row", svgstr: addRowSvg }),
@@ -28,7 +28,7 @@ index fb8ed13..b980cdb 100644
      const removeRowButton = new ToolbarButton({
        icon: new LabIcon({
          name: "spreadsheet:remove-row",
-@@ -39,5 +29,27 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
+@@ -40,5 +30,27 @@ export class SpreadsheetEditorDocumentWidget extends DocumentWidget<SpreadsheetW
        tooltip: this._trans.__("Remove the last row"),
      });
      this.toolbar.addItem("spreadsheet:remove-row", removeRowButton);
