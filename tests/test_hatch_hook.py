@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 
 HERE = Path(__file__).parent
-REPO_ROOT = HERE.parent.as_uri()
 
 TOML_CONTENT = f"""
 [build-system]
@@ -33,7 +32,7 @@ artifacts = [
 ]
 
 [tool.hatch.build.hooks.jupyter-translate]
-dependencies = ["jupyterlab-translate@{REPO_ROOT}"]
+dependencies = ["jupyterlab-translate"]
 
 [tool.hatch.build.targets.wheel]
 artifacts = [
@@ -98,6 +97,11 @@ msgstr "마크다운을 표시할 때 사용하는 글꼴.\\n"
 msgid "Cut Cell"
 msgid_plural "Cut Cells"
 msgstr[0] "셀 잘라내기"
+
+#: packages/notebook-extension/src/index.ts:2605
+msgid "Copy Cell"
+msgid_plural "Copy Cells"
+msgstr[0] ""
 """
     )
     (messages / "spellchecker.po").write_text(
@@ -143,7 +147,9 @@ def test_hatch_build(language_package):
         [sys.executable, "-m", "pip", "install", "build"], cwd=language_package
     )
 
-    subprocess.check_call([sys.executable, "-m", "build", "."], cwd=language_package)
+    subprocess.check_call(
+        [sys.executable, "-m", "build", "--no-isolation", "."], cwd=language_package
+    )
 
     # Check sdist
     with tarfile.open(
@@ -185,15 +191,19 @@ def test_hatch_build(language_package):
         with wheel.open(
             "jupyterlab_language_pack_ko_KR/locale/ko_KR/LC_MESSAGES/jupyterlab.json"
         ) as myfile:
-            myfile.read().decode(
-                "utf-8"
-            ) == """{
+            assert (
+                myfile.read().decode("utf-8")
+                == r"""{
     "": {
         "domain": "jupyterlab",
         "language": "ko-KR",
         "plural_forms": "nplurals=1; plural=0;",
         "version": "jupyterlab"
     },
+    "Cut Cell": [
+        "\uc140 \uc798\ub77c\ub0b4\uae30",
+        ""
+    ],
     "schema\u0004Markdown viewer settings.": [
         "\ub9c8\ud06c\ub2e4\uc6b4 \ubdf0\uc5b4 \uc124\uc815"
     ],
@@ -202,9 +212,6 @@ def test_hatch_build(language_package):
     ],
     "settings\u0004The font family used to render markdown.\nIf `null`, value from current theme is used.": [
         "\ub9c8\ud06c\ub2e4\uc6b4\uc744 \ud45c\uc2dc\ud560 \ub54c \uc0ac\uc6a9\ud558\ub294 \uae00\uaf34.\n\uac12\uc774 `null`\uc774\uba74 \ud604\uc7ac \ud14c\ub9c8\uc758 \ud574\ub2f9 \uac12\uc774 \uc0ac\uc6a9\ub429\ub2c8\ub2e4."
-    ],
-    "Cut Cell": [
-        "\uc140\u0020\uc798\ub77c\ub0b4\uae30",
-        ""
     ]
 }"""
+            )

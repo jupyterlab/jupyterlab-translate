@@ -30,6 +30,6 @@ git tag <new_tag>
 * Push commits and tags and CI will build and publish the package.
 
 ```bash
-git push upstream master
+git push upstream main
 git push upstream --tags
 ```
