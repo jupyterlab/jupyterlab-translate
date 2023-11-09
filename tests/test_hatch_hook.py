@@ -147,7 +147,9 @@ def test_hatch_build(language_package):
         [sys.executable, "-m", "pip", "install", "build"], cwd=language_package
     )
 
-    subprocess.check_call([sys.executable, "-m", "build", "--no-isolation", "."], cwd=language_package)
+    subprocess.check_call(
+        [sys.executable, "-m", "build", "--no-isolation", "."], cwd=language_package
+    )
 
     # Check sdist
     with tarfile.open(
@@ -189,9 +191,9 @@ def test_hatch_build(language_package):
         with wheel.open(
             "jupyterlab_language_pack_ko_KR/locale/ko_KR/LC_MESSAGES/jupyterlab.json"
         ) as myfile:
-            assert myfile.read().decode(
-                "utf-8"
-            ) == r"""{
+            assert (
+                myfile.read().decode("utf-8")
+                == r"""{
     "": {
         "domain": "jupyterlab",
         "language": "ko-KR",
@@ -212,3 +214,4 @@ def test_hatch_build(language_package):
         "\ub9c8\ud06c\ub2e4\uc6b4\uc744 \ud45c\uc2dc\ud560 \ub54c \uc0ac\uc6a9\ud558\ub294 \uae00\uaf34.\n\uac12\uc774 `null`\uc774\uba74 \ud604\uc7ac \ud14c\ub9c8\uc758 \ud574\ub2f9 \uac12\uc774 \uc0ac\uc6a9\ub429\ub2c8\ub2e4."
     ]
 }"""
+            )
