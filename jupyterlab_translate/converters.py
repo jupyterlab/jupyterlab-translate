@@ -57,7 +57,7 @@ def convert_catalog_to_json(po_path: Path, output_dir: Path, project: str) -> Pa
             # result[key] = [None, entry.msgstr]
             result[key] = [entry.msgstr]
         elif entry.msgstr_plural:
-            plural = [entry.msgid_plural]
+            plural = []
 
             result[key] = plural
             ordered_plural = sorted(entry.msgstr_plural.items())
