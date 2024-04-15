@@ -25,13 +25,13 @@ dependencies = [
     "importlib-metadata>=4.8.3;python_version<\"3.10\"",
     "babel",
     "click",
-    "copier>=7.0.0",
+    "copier>=9.2.0",
     "copier-templates-extensions",
     "crowdin-api-client",
     "hatchling>=1.5",
     "jinja2-time",
     "polib",
-    "pydantic<2.0.0",
+    "pydantic",
     "requests"
 ]
 
