@@ -12,6 +12,8 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      # IMPORTANT: this permission is mandatory for the release-action
+      contents: write
       # IMPORTANT: this permission is mandatory for trusted publishing
       id-token: write
     steps:
