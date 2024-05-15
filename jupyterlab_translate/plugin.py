@@ -3,7 +3,8 @@
 import itertools
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+from typing import Optional
 
 import polib
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -26,9 +27,7 @@ class JupyterLanguageBuildHook(BuildHookInterface):
         package_folder = Path(self.root)
         python_folder = next(
             package_folder.glob("jupyterlab_language_pack_??_??"),
-            next(
-                package_folder.glob("jupyterlab_language_pack_???_??"), None
-            )
+            next(package_folder.glob("jupyterlab_language_pack_???_??"), None)
         )
         if python_folder is None:
             self.app.display_error(
