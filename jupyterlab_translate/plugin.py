@@ -4,7 +4,6 @@ import itertools
 import os
 from pathlib import Path
 from typing import Any
-from typing import Optional
 
 import polib
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -16,6 +15,7 @@ from jupyterlab_translate.contributors import get_contributors_report
 
 # Minimal percentage needed to compile a PO file
 COMPILATION_THRESHOLD = 0
+PACKAGE_PREFIX = "jupyterlab_language_pack_"
 
 
 class JupyterLanguageBuildHook(BuildHookInterface):
@@ -26,8 +26,8 @@ class JupyterLanguageBuildHook(BuildHookInterface):
     def _get_locale_name(self) -> tuple[Path, str]:
         package_folder = Path(self.root)
         python_folder = next(
-            package_folder.glob("jupyterlab_language_pack_??_??"),
-            next(package_folder.glob("jupyterlab_language_pack_???_??"), None),
+            package_folder.glob(f"{PACKAGE_PREFIX}??_??"),
+            next(package_folder.glob(f"{PACKAGE_PREFIX}???_??"), None),
         )
         if python_folder is None:
             self.app.display_error(
@@ -35,7 +35,7 @@ class JupyterLanguageBuildHook(BuildHookInterface):
             )
             raise RuntimeError()
 
-        locale_name = python_folder.name[-5:]
+        locale_name = python_folder.name[len(PACKAGE_PREFIX) :]
         messages_folder = python_folder / "locale" / locale_name / "LC_MESSAGES"
 
         return messages_folder, locale_name

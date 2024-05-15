@@ -311,11 +311,11 @@ DEFAULT_SCHEMA_SELECTORS = {
     "definitions/.*/properties/.*/title": _default_settings_context,
     "definitions/.*/properties/.*/description": _default_settings_context,
     # JupyterLab-specific
-    "jupyter\.lab\.setting-icon-label": _default_settings_context,
-    "jupyter\.lab\.menus/.*/label": "menu",
-    "jupyter\.lab\.metadataforms/.*/label": "metadataforms",
-    "jupyter\.lab\.toolbars/.*/label": "toolbar",
-    "jupyter\.lab\.toolbars/.*/caption": "toolbar",
+    r"jupyter\.lab\.setting-icon-label": _default_settings_context,
+    r"jupyter\.lab\.menus/.*/label": "menu",
+    r"jupyter\.lab\.metadataforms/.*/label": "metadataforms",
+    r"jupyter\.lab\.toolbars/.*/label": "toolbar",
+    r"jupyter\.lab\.toolbars/.*/caption": "toolbar",
 }
 
 
