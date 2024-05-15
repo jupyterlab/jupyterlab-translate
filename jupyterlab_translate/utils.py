@@ -108,7 +108,11 @@ def create_new_language_pack(
     if not check_locale(locale):
         raise Exception("Invalid locale!")
 
-    loc = babel.Locale.parse("nb_NO" if locale == "no_NO" else locale)
+    try:
+        loc = babel.Locale.parse("nb_NO" if locale == "no_NO" else locale)
+        language_name = loc.english_name
+    except babel.UnknownLocaleError:
+        language_name = "unknown"
 
     locale_dash = locale.replace("_", "-")
     pkg_dir = Path(output_dir) / f"jupyterlab-language-pack-{locale_dash}"
@@ -116,15 +120,15 @@ def create_new_language_pack(
     copier.run_auto(
         template_url,
         pkg_dir,
-        data={"locale": locale_dash, "language": loc.english_name, "version": version},
+        data={"locale": locale_dash, "language": language_name, "version": version},
         vcs_ref=template_ref,
     )
 
 
 def check_locale(locale: str) -> bool:
     """Check if a locale is a valid value."""
-    # Add exception for no_NO
-    if locale == "no_NO":
+    # Add exceptions
+    if locale in {"ach_UG", "no_NO"}:
         return True
 
     value = False
