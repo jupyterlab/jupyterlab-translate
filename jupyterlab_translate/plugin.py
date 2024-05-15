@@ -3,7 +3,7 @@
 import itertools
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import polib
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
@@ -22,24 +22,33 @@ class JupyterLanguageBuildHook(BuildHookInterface):
 
     PLUGIN_NAME = "jupyter-translate"
 
-    def clean(self, versions: list[str]) -> None:
-        """This occurs before the build process if the -c/--clean flag was
-        passed to the build command, or when invoking the clean command.
-        """
-
+    def _get_locale_name(self) -> tuple[Path, str]:
         package_folder = Path(self.root)
         python_folder = next(
-            package_folder.glob("jupyterlab_language_pack_??_??"), None
+            package_folder.glob("jupyterlab_language_pack_??_??"),
+            next(
+                package_folder.glob("jupyterlab_language_pack_???_??"), None
+            )
         )
         if python_folder is None:
             self.app.display_error(
                 f"Unable to get the Python folder name in {package_folder!s}"
             )
-            return
-        else:
-            locale_name = python_folder.name[-5:]
+            raise RuntimeError()
 
+        locale_name = python_folder.name[-5:]
         messages_folder = python_folder / "locale" / locale_name / "LC_MESSAGES"
+
+        return messages_folder, locale_name
+
+    def clean(self, versions: list[str]) -> None:
+        """This occurs before the build process if the -c/--clean flag was
+        passed to the build command, or when invoking the clean command.
+        """
+        try:
+            messages_folder, locale_name = self._get_locale_name()
+        except RuntimeError:
+            return
 
         for bundle in itertools.chain(
             messages_folder.glob("*.json"), messages_folder.glob("*.mo")
@@ -51,22 +60,12 @@ class JupyterLanguageBuildHook(BuildHookInterface):
 
         Any modifications to the build data will be seen by the build target.
         """
-
-        package_folder = Path(self.root)
-        python_folder = next(
-            package_folder.glob("jupyterlab_language_pack_??_??"), None
-        )
-        if python_folder is None:
-            self.app.display_error(
-                f"Unable to get the Python folder name in {package_folder!s}"
-            )
+        try:
+            messages_folder, locale_name = self._get_locale_name()
+        except RuntimeError:
             return
-        else:
-            locale_name = python_folder.name[-5:]
 
         if self.target_name == "wheel":
-            messages_folder = python_folder / "locale" / locale_name / "LC_MESSAGES"
-
             po_files = list(filter(lambda f: f.is_file(), messages_folder.glob("*.po")))
             for file in po_files:
                 po = polib.pofile(str(file))
@@ -91,7 +90,7 @@ class JupyterLanguageBuildHook(BuildHookInterface):
                 )
             else:
                 # Update the contributors file
-                contributors = package_folder / CONTRIBUTORS
+                contributors = Path(self.root) / CONTRIBUTORS
                 content = get_contributors_report(
                     locale=locale_name.replace("_", "-"), crowdin_key=CROWDIN_API_KEY
                 )
