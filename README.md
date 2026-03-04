@@ -49,7 +49,7 @@ Visit the [language packs repository](https://github.com/jupyterlab/language-pac
 ```bash
 jupyterlab-translate extract <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
 jupyterlab-translate update <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME> -l es_ES
-jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME>
+jupyterlab-translate compile <JLAB-EXTENSION-DIR> <JLAB-EXTENSION-NAME> -l es_ES
 ```
 
 ## Development
